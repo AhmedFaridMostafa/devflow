@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Document } from "mongoose";
 
 export interface IInteraction {
     user: Types.ObjectId;
@@ -18,6 +18,8 @@ export const InteractionActionEnums = [
     "search",
 ] as const;
 
+
+export type IInteractionDoc = IInteraction & Document;
 
 const InteractionSchema = new Schema<IInteraction>(
     {
