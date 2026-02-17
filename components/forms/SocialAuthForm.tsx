@@ -7,14 +7,13 @@ import ROUTES from "@/constants/routes";
 
 import { Button } from "../ui/button";
 import { SOCIAL_AUTH_PROVIDERS } from "@/constants";
-import { AuthProvider } from "@/types/auth";
 import { toast } from "sonner";
 
 const SocialAuthForm = () => {
   const handleSignIn = async (provider: AuthProvider) => {
     try {
       await signIn(provider, {
-        callbackUrl: ROUTES.HOME,
+        redirectTo: ROUTES.HOME,
       });
     } catch (error) {
       console.error(error);

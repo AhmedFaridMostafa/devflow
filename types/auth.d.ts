@@ -1,6 +1,6 @@
-export type AuthProvider = "github" | "google";
+type AuthProvider = "github" | "google";
 
-export type SocialAuthProvider = {
+type SocialAuthProvider = {
   provider: AuthProvider;
   label: string;
   imageSrc: string;

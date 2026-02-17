@@ -1,7 +1,7 @@
 "use server";
 
 import { Session } from "next-auth";
-import { ZodError, ZodType } from "zod";
+import z, { ZodError } from "zod";
 
 import { auth } from "@/auth";
 
@@ -9,17 +9,24 @@ import { UnauthorizedError, ValidationError } from "../http-errors";
 import dbConnect from "../mongoose";
 import { getZodFieldErrors } from "./error";
 
-type ActionOptions<T> = {
-  params?: T;
-  schema?: ZodType<T>;
+type ActionOptions<S extends z.ZodType> = {
+  schema?: S;
+  params?: z.infer<S>;
   authorize?: boolean;
 };
 
-async function action<T>({
+type ActionSuccess<S extends z.ZodType | undefined> = {
+  params: S extends z.ZodType ? z.infer<S> : undefined;
+  session: Session | null;
+};
+
+type ActionResult<S extends z.ZodType> = ActionSuccess<S> | Error;
+
+async function action<S extends z.ZodType>({
   params,
   schema,
   authorize = false,
-}: ActionOptions<T>) {
+}: ActionOptions<S>): Promise<ActionResult<S>> {
   if (schema && params) {
     try {
       schema.parse(params);
@@ -41,7 +48,7 @@ async function action<T>({
 
   await dbConnect();
 
-  return { params, session };
+  return { params, session } as ActionSuccess<S>;
 }
 
 export default action;

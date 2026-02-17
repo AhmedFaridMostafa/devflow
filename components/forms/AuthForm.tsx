@@ -50,12 +50,9 @@ const AuthForm = <T extends FieldValues>({
     const result = await onSubmit(data);
     if (result?.success) {
       toast.success(
-        formType === "SIGN_IN" ? "Signed in successfully" : "Signed up successfully",
-        {
-          description: `Welcome! Redirecting...`,
-        }
+        formType === "SIGN_IN" ? "Signed in successfully" : "Signed up successfully"
       );
-        router.push(ROUTES.HOME); 
+      router.push(ROUTES.HOME);
     } else {
       toast.error(`Error ${result?.status || ""}`.trim(), {
         description: result?.error?.message || "An error occurred",
@@ -95,16 +92,16 @@ const AuthForm = <T extends FieldValues>({
                     field === "email"
                       ? "email"
                       : field === "password"
-                      ? formType === "SIGN_IN"
-                        ? "current-password"
-                        : "new-password"
-                      : "off"
+                        ? formType === "SIGN_IN"
+                          ? "current-password"
+                          : "new-password"
+                        : "off"
                   }
                   aria-invalid={fieldState.invalid}
                   className="paragraph-regular background-light900_dark300 light-border-2 text-dark300_light700 no-focus min-h-12 rounded-1.5 border"
                 />
                 {fieldState.invalid && (
-                  <FieldError  errors={[fieldState.error]} />
+                  <FieldError errors={[fieldState.error]} />
                 )}
               </Field>
             )}
