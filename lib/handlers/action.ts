@@ -9,24 +9,29 @@ import { UnauthorizedError, ValidationError } from "../http-errors";
 import dbConnect from "../mongoose";
 import { getZodFieldErrors } from "./error";
 
-type ActionOptions<S extends z.ZodType> = {
+type ActionOptions<S extends z.ZodType, A extends boolean> = {
   schema?: S;
   params?: z.infer<S>;
-  authorize?: boolean;
+  authorize?: A;
 };
 
-type ActionSuccess<S extends z.ZodType | undefined> = {
+type ActionSuccess<
+  S extends z.ZodType | undefined,
+  A extends boolean | undefined,
+> = {
   params: S extends z.ZodType ? z.infer<S> : undefined;
-  session: Session | null;
+  session: A extends true ? Session : null;
 };
 
-type ActionResult<S extends z.ZodType> = ActionSuccess<S> | Error;
+type ActionResult<S extends z.ZodType, A extends boolean> =
+  | ActionSuccess<S, A>
+  | Error;
 
-async function action<S extends z.ZodType>({
+async function action<S extends z.ZodType, A extends boolean>({
   params,
   schema,
-  authorize = false,
-}: ActionOptions<S>): Promise<ActionResult<S>> {
+  authorize = false as A,
+}: ActionOptions<S, A>): Promise<ActionResult<S, A>> {
   if (schema && params) {
     try {
       schema.parse(params);
@@ -43,12 +48,12 @@ async function action<S extends z.ZodType>({
 
   if (authorize) {
     session = await auth();
-    if (!session) return new UnauthorizedError();
+    if (!session || session.user) return new UnauthorizedError();
   }
 
   await dbConnect();
 
-  return { params, session } as ActionSuccess<S>;
+  return { params, session } as ActionSuccess<S, A>;
 }
 
 export default action;
