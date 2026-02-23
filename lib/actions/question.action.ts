@@ -12,7 +12,7 @@ import { AskQuestionSchema } from "../validations";
 
 export async function createQuestion(
   params: CreateQuestionParams,
-): Promise<ActionResponse> {
+): Promise<ActionResponse<Question>> {
   const validationResult = await action({
     params,
     schema: AskQuestionSchema,
@@ -58,7 +58,7 @@ export async function createQuestion(
 
     await session.commitTransaction();
 
-    return { success: true, data: question.toObject() };
+    return { success: true, data: JSON.parse(JSON.stringify(question)) };
   } catch (error) {
     await session.abortTransaction();
     return handleError(error) as ErrorResponse;

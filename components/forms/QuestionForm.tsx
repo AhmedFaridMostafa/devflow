@@ -1,6 +1,6 @@
 "use client";
 
-import { AskQuestionSchema } from "@/lib/validations";
+import { AskQuestionFormData, AskQuestionSchema, tagSchema } from "@/lib/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -12,12 +12,13 @@ import {
 } from "../ui/field";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { useRef } from "react";
-import { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import TagCard from "../cards/TagCard";
-import { z } from "zod";
 import { Spinner } from "../ui/spinner";
+import { toast } from "sonner";
+import { createQuestion } from "@/lib/actions/question.action";
+import { useRouter } from "next/navigation";
+import ROUTES from "@/constants/routes";
 
 
 const Editor = dynamic(() => import("@/components/editor"), {
@@ -25,10 +26,10 @@ const Editor = dynamic(() => import("@/components/editor"), {
     loading: () => <Spinner className="size-8" />,
 });
 
-type AskQuestionFormData = z.infer<typeof AskQuestionSchema>;
 
 
 const QuestionForm = () => {
+
     const form = useForm<AskQuestionFormData>({
         resolver: zodResolver(AskQuestionSchema),
         defaultValues: {
@@ -38,7 +39,7 @@ const QuestionForm = () => {
         },
     });
 
-    const editorRef = useRef<MDXEditorMethods>(null);
+    const router = useRouter();
 
     const handleTagRemove = (tagToRemove: string) => {
         const currentTags = form.getValues("tags");
@@ -53,63 +54,62 @@ const QuestionForm = () => {
         e: React.KeyboardEvent<HTMLInputElement>,
         currentTags: string[]
     ) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
+        if (e.key !== "Enter") return;
+        e.preventDefault();
 
-            const tagInput = e.currentTarget.value.trim().toLowerCase();
+        const validationTagInput = tagSchema.safeParse(e.currentTarget.value);
 
-            // Validate empty input
-            if (!tagInput) {
-                return;
-            }
-
-            // Check max tags limit
-            if (currentTags.length >= 3) {
-                form.setError("tags", {
-                    type: "manual",
-                    message: "Cannot add more than 3 tags.",
-                });
-                return;
-            }
-
-            // Check tag length (must match validation schema)
-            if (tagInput.length > 30) {
-                form.setError("tags", {
-                    type: "manual",
-                    message: "Tag cannot exceed 30 characters.",
-                });
-                return;
-            }
-
-            // Check for duplicates
-            if (currentTags.includes(tagInput)) {
-                form.setError("tags", {
-                    type: "manual",
-                    message: "Tag already exists.",
-                });
-                return;
-            }
-
-            // Add the tag
-            form.setValue("tags", [...currentTags, tagInput], {
-                shouldValidate: true,
-                shouldDirty: true,
+        if (!validationTagInput.success) {
+            form.setError("tags", {
+                type: validationTagInput.error.issues[0]?.code ?? "manual",
+                message: validationTagInput.error.issues[0]?.message ?? "Invalid tag.",
             });
-
-            // Clear input
-            e.currentTarget.value = "";
-
-            // Clear any previous errors
-            form.clearErrors("tags");
+            return;
         }
+
+        if (currentTags.includes(validationTagInput.data)) {
+            form.setError("tags", {
+                type: "manual",
+                message: "Tag already exists.",
+            });
+            return;
+        }
+
+
+        if (currentTags.length >= 3) {
+            form.setError("tags", { type: "max", message: "Cannot add more than 3 tags." });
+            return;
+        }
+
+
+        form.setValue("tags", [...currentTags, validationTagInput.data], {
+            shouldValidate: true,
+            shouldDirty: true,
+        });
+
+
+        e.currentTarget.value = "";
+        form.clearErrors("tags");
+
     };
 
     const handleCreateQuestion = async (data: AskQuestionFormData) => {
         try {
-            // Implement your question creation logic here
-            console.log("Question data:", data);
+            const result = await createQuestion(data);
 
-            // Example: await createQuestion(data);
+            if (result.success) {
+                toast.success(
+                    "Question created successfully",
+                );
+                if (result.data) router.push(ROUTES.QUESTION(result.data._id));
+
+            } else {
+                toast.error(
+                    `Error ${result.status}`, {
+                    description: result.error?.message || "Something went wrong",
+                });
+            }
+
         } catch (error) {
             console.error("Failed to create question:", error);
         }
@@ -161,10 +161,7 @@ const QuestionForm = () => {
                             data-invalid={fieldState.invalid}
                             className="flex w-full flex-col"
                         >
-                            <FieldLabel
-                                htmlFor={field.name}
-                                className="paragraph-semibold text-dark400_light800"
-                            >
+                            <FieldLabel className="paragraph-semibold text-dark400_light800">
                                 Detailed explanation of your problem{" "}
                                 <span className="text-primary-500">*</span>
                             </FieldLabel>
@@ -172,7 +169,6 @@ const QuestionForm = () => {
 
                             <Editor
                                 value={field.value}
-                                editorRef={editorRef}
                                 fieldChange={field.onChange}
                             />
 

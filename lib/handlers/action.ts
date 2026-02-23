@@ -48,7 +48,7 @@ async function action<S extends z.ZodType, A extends boolean>({
 
   if (authorize) {
     session = await auth();
-    if (!session || session.user) return new UnauthorizedError();
+    if (!session || !session?.user) return new UnauthorizedError();
   }
 
   await dbConnect();

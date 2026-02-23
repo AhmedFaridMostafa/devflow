@@ -35,13 +35,13 @@ import { Ref } from "react";
 import "@mdxeditor/editor/style.css";
 import "./dark-editor.css";
 
-interface Props {
+interface EditorProps {
     value: string;
-    editorRef: Ref<MDXEditorMethods> | null;
+    editorRef?: Ref<MDXEditorMethods> | null;
     fieldChange: (value: string) => void;
 }
 
-const Editor = ({ value, editorRef, fieldChange }: Props) => {
+const Editor = ({ value, editorRef, fieldChange }: EditorProps) => {
     const { resolvedTheme } = useTheme();
 
     const themeExtension = resolvedTheme === "dark" ? [basicDark] : [];
