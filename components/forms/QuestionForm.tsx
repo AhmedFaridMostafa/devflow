@@ -16,7 +16,7 @@ import dynamic from "next/dynamic";
 import TagCard from "../cards/TagCard";
 import { Spinner } from "../ui/spinner";
 import { toast } from "sonner";
-import { createQuestion } from "@/lib/actions/question.action";
+import { createQuestion, editQuestion } from "@/lib/actions/question.action";
 import { useRouter } from "next/navigation";
 import ROUTES from "@/constants/routes";
 
@@ -26,20 +26,33 @@ const Editor = dynamic(() => import("@/components/editor"), {
     loading: () => <Spinner className="size-8" />,
 });
 
+type QuestionFormProps = {
+    mode: QuestionFormMode;
+};
 
+type QuestionFormMode =
+    | { type: "create" }
+    | { type: "edit"; question: Question };
 
-const QuestionForm = () => {
+const QuestionForm = ({ mode }: QuestionFormProps) => {
+
+    const router = useRouter();
+
+    const isEdit = mode.type === "edit";
 
     const form = useForm<AskQuestionFormData>({
         resolver: zodResolver(AskQuestionSchema),
         defaultValues: {
-            title: "",
-            content: "",
-            tags: [],
+            title: isEdit ? mode.question.title : "",
+            content: isEdit ? mode.question.content : "",
+            tags: isEdit
+                ? (mode.question.tags as Tag[]).map((tag) => tag.name)
+                : [],
         },
     });
 
-    const router = useRouter();
+
+    const isSubmitting = form.formState.isSubmitting;
 
     const handleTagRemove = (tagToRemove: string) => {
         const currentTags = form.getValues("tags");
@@ -95,13 +108,16 @@ const QuestionForm = () => {
 
     const handleCreateQuestion = async (data: AskQuestionFormData) => {
         try {
-            const result = await createQuestion(data);
+            const result = isEdit ? await editQuestion({
+                questionId: mode.question._id.toString(),
+                ...data,
+            }) : await createQuestion(data);
 
             if (result.success) {
                 toast.success(
-                    "Question created successfully",
+                    `Question ${isEdit ? "updated" : "created"} successfully`,
                 );
-                if (result.data) router.push(ROUTES.QUESTION(result.data._id));
+                if (result.data) router.push(ROUTES.QUESTION(result.data._id.toString()));
 
             } else {
                 toast.error(
@@ -112,6 +128,9 @@ const QuestionForm = () => {
 
         } catch (error) {
             console.error("Failed to create question:", error);
+            toast.error("Unexpected error", {
+                description: "Please try again. If the problem persists, contact support.",
+            });
         }
     };
 
@@ -238,11 +257,13 @@ const QuestionForm = () => {
                     <Button
                         type="submit"
                         className="primary-gradient w-fit text-light-900"
-                        disabled={form.formState.isSubmitting}
+                        disabled={isSubmitting}
                     >
-                        {form.formState.isSubmitting
-                            ? "Submitting..."
-                            : "Ask A Question"}
+                        {isSubmitting
+                            ? "Submitting…"
+                            : isEdit
+                                ? "Save Changes"
+                                : "Ask a Question"}
                     </Button>
                 </Field>
             </FieldGroup>

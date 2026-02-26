@@ -63,18 +63,26 @@ export const AskQuestionSchema = z.object({
     .min(5, {
       error: "Title must be at least 5 characters.",
     })
-    .max(130, { error: "Title mustn't be longer then 130 characters." }),
+    .max(130, { error: "Title mustn't be longer than 130 characters." }),
   content: z.string().min(100, { error: "Minimum of 100 characters." }),
   tags: z
     .array(tagSchema)
     .min(1, { error: "Add at least one tag." })
     .max(3, { error: "Maximum of 3 tags." })
     .refine((tags) => new Set(tags).size === tags.length, {
-      message: "Tags must be unique.",
+      error: "Tags must be unique.",
     }),
 });
 
 export type AskQuestionFormData = z.infer<typeof AskQuestionSchema>;
+
+export const EditQuestionSchema = AskQuestionSchema.extend({
+  questionId: z.string().min(1, { message: "Question ID is required." }),
+});
+
+export const GetQuestionSchema = z.object({
+  questionId: z.string().min(1, { message: "Question ID is required." }),
+});
 
 export const UserSchema = z.object({
   name: z.string().min(1, { error: "Name is required." }),

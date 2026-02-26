@@ -6,32 +6,38 @@ interface Tag {
 interface Author {
   _id: string;
   name: string;
-  image: string;
+  image?: string;
 }
 
 interface Question {
   _id: string;
   title: string;
-  tags: Tag[];
-  author: Author;
+  content: string;
+  tags: (string | Tag)[];
+  author: string | Author;
   upvotes: number;
   answers: number;
   views: number;
-  createdAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
-type ActionResponse<T = null> = {
-  success: boolean;
-  data?: T;
-  error?: {
+type SuccessResponse<T = null> = {
+  success: true;
+  data: T;
+  status?: number;
+};
+
+type ErrorResponse = {
+  success: false;
+  error: {
     message: string;
     details?: Record<string, string[]>;
   };
   status?: number;
 };
 
-type SuccessResponse<T = null> = ActionResponse<T> & { success: true };
-type ErrorResponse = ActionResponse<undefined> & { success: false };
+type ActionResponse<T = null> = SuccessResponse<T> | ErrorResponse;
 
 type APIErrorResponse = NextResponse<ErrorResponse>;
 type APIResponse<T = null> = NextResponse<SuccessResponse<T> | ErrorResponse>;
