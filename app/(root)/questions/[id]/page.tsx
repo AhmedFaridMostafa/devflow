@@ -1,12 +1,14 @@
 import { getQuestion } from "@/lib/actions/question.action";
+import { notFound } from "next/navigation";
 
 
 const QuestionDetails = async ({ params }: RouteParams) => {
     const { id } = await params;
-    const { success, data: question } = await getQuestion({ questionId: id });
-    console.log(success)
-    console.log(question)
-    return <div>Question Page: {id}</div>;
+    const result = await getQuestion({ questionId: id });
+    if (!result.success) return notFound();
+    const question = result.data;
+
+    return <div>Question Page: {question._id}</div>;
 };
 
 export default QuestionDetails;

@@ -31,21 +31,24 @@ const QuestionCard = ({
             </div>
 
             <div className="mt-3.5 flex w-full flex-wrap gap-2">
-                {tags.map((tag: Tag) => (
+                {(tags as Tag[]).map((tag) => (
                     <TagCard key={tag._id} _id={tag._id} name={tag.name} compact />
                 ))}
             </div>
 
             <div className="flex-between mt-6 w-full flex-wrap gap-3">
-                <Metric
-                    imgUrl={author.image}
-                    alt={author.name}
-                    value={author.name}
-                    title={`• asked ${getTimeStamp(createdAt)}`}
-                    href={ROUTES.PROFILE(author._id)}
-                    textStyles="body-medium text-dark400_light700"
-                    isAuthor
-                />
+                {
+                    typeof author === "object" &&
+                    <Metric
+                        imgUrl={author.image}
+                        alt={author.name}
+                        value={author.name}
+                        title={`• asked ${getTimeStamp(createdAt)}`}
+                        href={ROUTES.PROFILE(author._id)}
+                        textStyles="body-medium text-dark400_light700"
+                        isAuthor
+                    />
+                }
 
                 <div className="flex items-center gap-3 max-sm:flex-wrap max-sm:justify-start">
                     <Metric

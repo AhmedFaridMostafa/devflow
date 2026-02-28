@@ -1,13 +1,13 @@
 import mongoose, { Mongoose } from "mongoose";
 import logger from "./logger";
+import "@/database";
 
-const MONGODB_URI = process.env.MONGODB_URI as string | undefined;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   logger.error("MONGODB_URI is not defined");
   throw new Error("MONGODB_URI is not defined");
 }
-
 
 interface MongooseCache {
   conn: Mongoose | null;

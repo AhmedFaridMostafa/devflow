@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+
 
 interface MetricProps {
-    imgUrl: string;
+    imgUrl?: string;
     alt: string;
     value: string | number;
     title: string;
@@ -25,14 +25,14 @@ const Metric = ({
 }: MetricProps) => {
     const metricContent = (
         <>
-            <Image
+            {imgUrl && <Image
                 src={imgUrl}
                 width={16}
                 height={16}
                 alt={alt}
                 className={`rounded-full object-contain ${imgStyles}`}
             />
-
+            }
             <p className={`${textStyles} flex items-center gap-1`}>
                 {value}
 
