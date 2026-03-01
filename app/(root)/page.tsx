@@ -4,7 +4,9 @@ import ROUTES from "@/constants/routes";
 import LocalSearch from "@/components/search/LocalSearch";
 import HomeFilter from "@/components/filter/HomeFilter";
 import { getQuestions } from "@/lib/actions/question.action";
-import QuestionsList from "@/components/QuestionsList";
+import DataRenderer from "@/components/DataRenderer";
+import QuestionCard from "@/components/cards/QuestionCard";
+import { EMPTY_QUESTION } from "@/constants/states";
 
 
 const Home = async ({ searchParams }: RouteParams) => {
@@ -17,9 +19,6 @@ const Home = async ({ searchParams }: RouteParams) => {
     filter: filter || "",
   });
 
-  console.log(result)
-
-  if (!result.success) return <QuestionsList success={result.success} error={result.error} />
 
   return (
     <>
@@ -36,9 +35,20 @@ const Home = async ({ searchParams }: RouteParams) => {
         <LocalSearch route="/" imgSrc="/icons/search.svg" placeholder="Search questions..." otherClasses="flex-1" />
       </section>
       <HomeFilter />
-      <div className="mt-10 flex w-full flex-col gap-6">
-        <QuestionsList success={result.success} questions={result.data.questions} />
-      </div>
+
+      <DataRenderer
+        response={result}
+        selector={(data) => data.questions}
+        empty={EMPTY_QUESTION}
+        render={(questions) => (
+          <div className="mt-10 flex w-full flex-col gap-6">
+            {questions.map((question) => (
+              <QuestionCard key={question._id} question={question} />
+            ))}
+          </div>
+        )}
+      />
+
     </>
   );
 };
