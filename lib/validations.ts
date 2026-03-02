@@ -84,18 +84,26 @@ export const GetQuestionSchema = z.object({
   questionId: z.string().min(1, { message: "Question ID is required." }),
 });
 
-export const PaginatedSearchParamsSchema = z
-  .object({
-    page: z.coerce.number().int().positive().default(1),
-    pageSize: z.coerce.number().int().positive().max(100).default(10),
-    query: z.string().trim().optional(),
-    filter: z.string().trim().optional(),
-    sort: z.string().trim().optional(),
-  })
-  .transform((data) => ({
+const BasePaginatedSearchParamsSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(10),
+  query: z.string().trim().optional(),
+  filter: z.string().trim().optional(),
+  sort: z.string().trim().optional(),
+});
+
+export const PaginatedSearchParamsSchema =
+  BasePaginatedSearchParamsSchema.transform((data) => ({
     ...data,
     skip: (data.page - 1) * data.pageSize,
   }));
+
+export const GetTagQuestionsSchema = BasePaginatedSearchParamsSchema.extend({
+  tagId: z.string().min(1, { error: "Tag ID is required." }),
+}).transform((data) => ({
+  ...data,
+  skip: (data.page - 1) * data.pageSize,
+}));
 
 export const UserSchema = z.object({
   name: z.string().min(1, { error: "Name is required." }),

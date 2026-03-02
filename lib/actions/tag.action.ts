@@ -1,8 +1,11 @@
 import { QueryFilter } from "mongoose";
 import action from "../handlers/action";
 import handleError from "../handlers/error";
-import { PaginatedSearchParamsSchema } from "../validations";
-import { Tag } from "@/database";
+import {
+  GetTagQuestionsSchema,
+  PaginatedSearchParamsSchema,
+} from "../validations";
+import { Question, Tag } from "@/database";
 import { serialize } from "../utils";
 
 export const getTags = async (
@@ -60,6 +63,61 @@ export const getTags = async (
       success: true,
       data: {
         tags: serialize(tags),
+        isNext,
+      },
+    };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
+  }
+};
+
+export const getTagQuestions = async (
+  params: GetTagQuestionsParams,
+): Promise<
+  ActionResponse<{ tag: Tag; questions: Question[]; isNext: boolean }>
+> => {
+  const validationResult = await action({
+    params,
+    schema: GetTagQuestionsSchema,
+  });
+
+  if (validationResult instanceof Error) {
+    return handleError(validationResult) as ErrorResponse;
+  }
+
+  const { tagId, skip, pageSize = 10, query } = validationResult.params;
+
+  try {
+    const tag = await Tag.findById(tagId);
+    if (!tag) throw new Error("Tag not found");
+
+    const filterQuery: QueryFilter<typeof Question> = {
+      tags: { $in: [tagId] },
+    };
+
+    if (query) {
+      filterQuery.title = { $regex: query, $options: "i" };
+    }
+
+    const totalQuestions = await Question.countDocuments(filterQuery);
+
+    const questions = await Question.find(filterQuery)
+      .lean()
+      .select("_id title views answers upvotes downvotes author createdAt")
+      .populate([
+        { path: "author", select: "name image" },
+        { path: "tags", select: "name" },
+      ])
+      .skip(skip)
+      .limit(pageSize);
+
+    const isNext = totalQuestions > skip + questions.length;
+
+    return {
+      success: true,
+      data: {
+        tag: serialize(tag),
+        questions: serialize(questions),
         isNext,
       },
     };
