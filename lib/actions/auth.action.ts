@@ -56,7 +56,7 @@ export async function signUpWithCredentials(
 
     await signIn("credentials", { email, password, redirect: false });
 
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
     await session.abortTransaction();
     return handleError(error) as ErrorResponse;
@@ -87,6 +87,9 @@ export async function signInWithCredentials(
 
     if (!existingAccount) throw new NotFoundError("Account");
 
+    if (!existingAccount.password)
+      throw new Error("Password is not set for this account");
+
     const passwordMatch = await bcrypt.compare(
       password,
       existingAccount.password,
@@ -96,7 +99,7 @@ export async function signInWithCredentials(
 
     await signIn("credentials", { email, password, redirect: false });
 
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
     return handleError(error) as ErrorResponse;
   }

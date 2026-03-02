@@ -1,11 +1,8 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
-
-import { IAccountDoc } from "./database/account.model";
 import { api } from "./lib/api";
 import Credentials from "next-auth/providers/credentials";
-import { IUserDoc } from "./database/user.model";
 import { SignInSchema } from "./lib/validations";
 import bcrypt from "bcryptjs";
 
@@ -21,29 +18,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const { email, password } = validatedFields.data;
 
-        const { data: existingAccount } = (await api.accounts.getByProvider(
-          email,
-        )) as ActionResponse<IAccountDoc>;
+        const existingAccount = await api.accounts.getByProvider(email);
 
-        if (!existingAccount) return null;
+        if (!existingAccount.success) return null;
 
-        const { data: existingUser } = (await api.users.getById(
-          existingAccount.userId.toString(),
-        )) as ActionResponse<IUserDoc>;
+        const existingUser = await api.users.getById(
+          existingAccount.data.userId.toString(),
+        );
 
-        if (!existingUser) return null;
+        if (!existingUser.success) return null;
 
         const isValidPassword = await bcrypt.compare(
           password,
-          existingAccount.password!,
+          existingAccount.data.password!,
         );
 
         if (isValidPassword) {
           return {
-            id: existingUser._id.toString(),
-            name: existingUser.name,
-            email: existingUser.email,
-            image: existingUser.image,
+            id: existingUser.data._id.toString(),
+            name: existingUser.data.name,
+            email: existingUser.data.email,
+            image: existingUser.data.image,
           };
         }
 
@@ -58,16 +53,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async jwt({ token, account }) {
       if (account) {
-        const { data: existingAccount, success } =
-          (await api.accounts.getByProvider(
-            account.type === "credentials"
-              ? token.email!
-              : account.providerAccountId,
-          )) as ActionResponse<IAccountDoc>;
+        const existingAccount = await api.accounts.getByProvider(
+          account.type === "credentials"
+            ? token.email!
+            : account.providerAccountId,
+        );
 
-        if (!success || !existingAccount) return token;
+        if (!existingAccount.success) return token;
 
-        const userId = existingAccount.userId;
+        const userId = existingAccount.data.userId;
 
         if (userId) token.sub = userId.toString();
       }

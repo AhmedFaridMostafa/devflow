@@ -14,6 +14,7 @@ import {
   GetQuestionSchema,
   PaginatedSearchParamsSchema,
 } from "../validations";
+import { serialize } from "../utils";
 
 export async function createQuestion(
   params: CreateQuestionParams,
@@ -71,7 +72,7 @@ export async function createQuestion(
     // 6️⃣ Commit transaction if everything succeeds
     await dbSession.commitTransaction();
 
-    return { success: true, data: JSON.parse(JSON.stringify(question)) };
+    return { success: true, data: serialize(question) };
   } catch (error) {
     // 7️⃣ Rollback transaction on error
     await dbSession.abortTransaction();
@@ -198,7 +199,7 @@ export async function editQuestion(
 
     if (!updatedQuestion) throw new Error("Question not found after update");
 
-    return { success: true, data: JSON.parse(JSON.stringify(updatedQuestion)) };
+    return { success: true, data: serialize(updatedQuestion) };
   } catch (error) {
     // 1️⃣4️⃣ Rollback on error
     await session.abortTransaction();
@@ -233,7 +234,7 @@ export async function getQuestion(
     if (!question) throw new Error("Question not found");
 
     // 3️⃣ Return the question
-    return { success: true, data: JSON.parse(JSON.stringify(question)) };
+    return { success: true, data: serialize(question) };
   } catch (error) {
     // 4️⃣ Handle errors consistently
     return handleError(error) as ErrorResponse;
@@ -299,7 +300,7 @@ export async function getQuestions(
 
     return {
       success: true,
-      data: { questions: JSON.parse(JSON.stringify(questions)), isNext },
+      data: { questions: serialize(questions), isNext },
     };
   } catch (error) {
     return handleError(error) as ErrorResponse;

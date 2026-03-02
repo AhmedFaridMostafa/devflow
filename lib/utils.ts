@@ -44,3 +44,7 @@ export const getTimeStamp = (createdAt: Date | string): string => {
 
   return `${diffYear} Year ago`;
 };
+
+export const serialize = <T>(data: T) => {
+  return JSON.parse(JSON.stringify(data));
+};
