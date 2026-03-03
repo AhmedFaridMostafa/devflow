@@ -2,7 +2,6 @@
 
 import { MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
-import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -12,10 +11,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+
+const themes = [
+  { label: "Light", value: "light" },
+  { label: "Dark", value: "dark" },
+  { label: "System", value: "system" },
+] as const;
 
 const Theme = () => {
-  const { setTheme } = useTheme();
-
+  const { theme, setTheme } = useTheme();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -25,16 +30,14 @@ const Theme = () => {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
+      <DropdownMenuContent align="end" className="background-light900_dark200 z-50 shadow-light-300 dark:shadow-none">
+        {themes.map((them) =>
+        (
+          <DropdownMenuItem key={them.value} className={cn({ "primary-gradient text-white": them.value === theme })} onClick={() => setTheme(them.value)}>
+            {them.label}
+          </DropdownMenuItem>
+        )
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
