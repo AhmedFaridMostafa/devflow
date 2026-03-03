@@ -228,7 +228,8 @@ export async function getQuestion(
   try {
     // 2️⃣ Fetch question and populate tags
     const question = await Question.findById(questionId)
-      .populate("tags")
+      .populate("tags", "name")
+      .populate("author", "name image")
       .lean();
 
     if (!question) throw new Error("Question not found");
