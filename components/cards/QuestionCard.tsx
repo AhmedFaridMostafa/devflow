@@ -1,5 +1,4 @@
 import Link from "next/link";
-import React from "react";
 
 import ROUTES from "@/constants/routes";
 import { getTimeStamp } from "@/lib/utils";
@@ -40,13 +39,13 @@ const QuestionCard = ({
                 {
                     typeof author === "object" &&
                     <Metric
-                        imgUrl={author.image}
+                        imgUrl={author.image!}
                         alt={author.name}
                         value={author.name}
                         title={`• asked ${getTimeStamp(createdAt)}`}
                         href={ROUTES.PROFILE(author._id)}
                         textStyles="body-medium text-dark400_light700"
-                        isAuthor
+                        titleStyles="max-sm:hidden"
                     />
                 }
 

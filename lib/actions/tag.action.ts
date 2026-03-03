@@ -10,7 +10,7 @@ import { serialize } from "../utils";
 
 export const getTags = async (
   params: PaginatedSearchParams,
-): Promise<ActionResponse<{ tags: Tag[]; isNext: boolean }>> => {
+  ): Promise<ActionResponse<{ tags: Tag[]; isNext: boolean }>> => {
   const validationResult = await action({
     params,
     schema: PaginatedSearchParamsSchema,
