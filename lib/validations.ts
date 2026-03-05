@@ -109,6 +109,10 @@ export const IncrementViewsSchema = z.object({
   questionId: z.string().min(1, { error: "Question ID is required." }),
 });
 
+export const AnswerSchema = z.object({
+  content: z.string().min(100, { message: "Minimum of 100 characters." }),
+});
+
 export const UserSchema = z.object({
   name: z.string().min(1, { error: "Name is required." }),
   username: z

@@ -2,5 +2,12 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
-  "cSpell.words": ["Devflow", "devicon", "downvotes", "upserted", "upvotes"]
+  "cSpell.words": [
+    "Devflow",
+    "devicon",
+    "downvotes",
+    "mdxeditor",
+    "upserted",
+    "upvotes"
+  ]
 }
