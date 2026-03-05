@@ -24,14 +24,12 @@ const Editor = dynamic(() => import("@/components/editor"), {
 });
 
 interface AnswerFormProps {
-  userId: string;
   questionId: string;
   questionTitle: string;
   questionContent: string;
 }
 
 const AnswerForm = ({
-  userId,
   questionId,
   questionTitle,
   questionContent,
@@ -52,6 +50,7 @@ const AnswerForm = ({
       questionId,
       content: data.content,
     });
+    console.log(result);
     if (result.success) {
       toast.success("Your answer has been posted successfully");
       form.reset();

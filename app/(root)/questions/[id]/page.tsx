@@ -98,7 +98,6 @@ const QuestionDetails = async ({ params }: RouteParams) => {
       <section className="my-5">
         {season?.user?.id ? (
           <AnswerForm
-            userId={season.user.id}
             questionId={_id}
             questionTitle={title}
             questionContent={content}

@@ -77,11 +77,11 @@ export const AskQuestionSchema = z.object({
 export type AskQuestionFormData = z.infer<typeof AskQuestionSchema>;
 
 export const EditQuestionSchema = AskQuestionSchema.extend({
-  questionId: z.string().min(1, { message: "Question ID is required." }),
+  questionId: z.string().min(1, { error: "Question ID is required." }),
 });
 
 export const GetQuestionSchema = z.object({
-  questionId: z.string().min(1, { message: "Question ID is required." }),
+  questionId: z.string().min(1, { error: "Question ID is required." }),
 });
 
 const BasePaginatedSearchParamsSchema = z.object({
@@ -110,7 +110,11 @@ export const IncrementViewsSchema = z.object({
 });
 
 export const AnswerSchema = z.object({
-  content: z.string().min(100, { message: "Minimum of 100 characters." }),
+  content: z.string().min(100, { error: "Minimum of 100 characters." }),
+});
+
+export const AnswerServerSchema = AnswerSchema.extend({
+  questionId: z.string().min(1, { error: "Question ID is required." }),
 });
 
 export const UserSchema = z.object({
