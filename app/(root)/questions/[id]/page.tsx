@@ -11,20 +11,33 @@ import { after } from "next/server";
 import AnswerForm from "@/components/forms/AnswerForm";
 import { auth } from "@/auth";
 import LoginToAnswer from "@/components/LoginToAnswer";
+import { getAnswers } from "@/lib/actions/answer.action";
 
-const QuestionDetails = async ({ params }: RouteParams) => {
-  const { id } = await params;
+const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
+  const [{ id }, { page, pageSize, filter }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   const [season, questionResult] = await Promise.all([
     auth(),
     getQuestion({ questionId: id }),
   ]);
+
   if (!questionResult.success) return redirect("/404");
 
   after(async () => {
     await incrementViews({ questionId: id });
   });
 
+  const answersResult = await getAnswers({
+    questionId: id,
+    page: Number(page) || 1,
+    pageSize: Number(pageSize) || 10,
+    filter,
+  });
+
+  console.log(answersResult);
   const { _id, title, author, createdAt, answers, views, tags, content } =
     questionResult.data;
 
@@ -33,21 +46,17 @@ const QuestionDetails = async ({ params }: RouteParams) => {
       <div className="flex-start w-full flex-col">
         <div className="flex w-full flex-col-reverse justify-between">
           <div className="flex items-center justify-start gap-1">
-            {typeof author !== "string" && (
-              <>
-                <UserAvatar
-                  id={author._id}
-                  name={author.name}
-                  className="size-[22px]"
-                  fallbackClassName="text-[10px]"
-                />
-                <Link href={ROUTES.PROFILE(author._id)}>
-                  <p className="paragraph-semibold text-dark300_light700">
-                    {author.name}
-                  </p>
-                </Link>
-              </>
-            )}
+            <UserAvatar
+              id={author._id}
+              name={author.name}
+              className="size-[22px]"
+              fallbackClassName="text-[10px]"
+            />
+            <Link href={ROUTES.PROFILE(author._id)}>
+              <p className="paragraph-semibold text-dark300_light700">
+                {author.name}
+              </p>
+            </Link>
           </div>
 
           <div className="flex justify-end">
@@ -87,12 +96,9 @@ const QuestionDetails = async ({ params }: RouteParams) => {
       <Preview content={content} />
 
       <div className="mt-8 flex flex-wrap gap-2">
-        {tags.map(
-          (tag) =>
-            typeof tag !== "string" && (
-              <TagCard key={tag._id} _id={tag._id} name={tag.name} compact />
-            ),
-        )}
+        {tags.map((tag) => (
+          <TagCard key={tag._id} _id={tag._id} name={tag.name} compact />
+        ))}
       </div>
 
       <section className="my-5">

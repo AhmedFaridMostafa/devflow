@@ -12,6 +12,8 @@ export interface IVote {
   actionId: Types.ObjectId;
   actionType: "question" | "answer";
   voteType: "upvote" | "downvote";
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type IVoteDoc = HydratedDocument<IVote>;

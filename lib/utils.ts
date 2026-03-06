@@ -1,6 +1,7 @@
 import { techDescriptionMap, techMap } from "@/constants/techMap";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import mongoose from "mongoose";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -53,8 +54,20 @@ export const getTimeStamp = (createdAt: Date | string): string => {
   return `${diffYear} Year ago`;
 };
 
-export const serialize = <T>(data: T) => {
-  return JSON.parse(JSON.stringify(data));
+export type Serialize<T> = {
+  [K in keyof T]: T[K] extends mongoose.Types.ObjectId
+    ? string
+    : T[K] extends Date
+      ? string
+      : T[K] extends mongoose.Types.ObjectId[]
+        ? string[]
+        : T[K] extends object
+          ? Serialize<T[K]>
+          : T[K];
+};
+
+export const serialize = <T>(data: T): Serialize<T> => {
+  return JSON.parse(JSON.stringify(data)) as Serialize<T>;
 };
 
 export function formatNumber(number: number) {

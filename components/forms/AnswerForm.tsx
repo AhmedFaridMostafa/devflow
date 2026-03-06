@@ -50,7 +50,6 @@ const AnswerForm = ({
       questionId,
       content: data.content,
     });
-    console.log(result);
     if (result.success) {
       toast.success("Your answer has been posted successfully");
       form.reset();

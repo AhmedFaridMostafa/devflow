@@ -13,8 +13,8 @@ interface Question {
   _id: string;
   title: string;
   content: string;
-  tags: (string | Tag)[];
-  author: string | Author;
+  tags: Tag[];
+  author: Author;
   upvotes: number;
   answers: number;
   views: number;
@@ -53,4 +53,11 @@ interface PaginatedSearchParams {
   query?: string;
   filter?: string;
   sort?: string;
+}
+interface Answer {
+  _id: string;
+  author: Author;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }

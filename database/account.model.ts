@@ -14,6 +14,8 @@ export interface IAccount {
   password?: string;
   provider: string;
   providerAccountId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type IAccountDoc = HydratedDocument<IAccount>;

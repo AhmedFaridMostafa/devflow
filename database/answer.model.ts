@@ -13,6 +13,8 @@ export interface IAnswer {
   content: string;
   upvotes: number;
   downvotes: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type IAnswerDoc = HydratedDocument<IAnswer>;

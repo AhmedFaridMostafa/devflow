@@ -2,7 +2,7 @@
 
 import mongoose, { Types, QueryFilter } from "mongoose";
 
-import Question from "@/database/question.model";
+import Question, { type IQuestion } from "@/database/question.model";
 import TagQuestion from "@/database/tag-question.model";
 import Tag from "@/database/tag.model";
 
@@ -15,13 +15,13 @@ import {
   IncrementViewsSchema,
   PaginatedSearchParamsSchema,
 } from "../validations";
-import { serialize } from "../utils";
+import { type Serialize, serialize } from "../utils";
 import { revalidatePath } from "next/cache";
 import ROUTES from "@/constants/routes";
 
 export async function createQuestion(
   params: CreateQuestionParams,
-): Promise<ActionResponse<Question>> {
+): Promise<ActionResponse<Serialize<IQuestion & { _id: Types.ObjectId }>>> {
   // 1️⃣ Validate input and authorize user
   const validationResult = await action({
     params,
@@ -88,7 +88,7 @@ export async function createQuestion(
 
 export async function editQuestion(
   params: EditQuestionParams,
-): Promise<ActionResponse<Question>> {
+): Promise<ActionResponse<Serialize<IQuestion & { _id: Types.ObjectId }>>> {
   // 1️⃣ Validate input and authorize user
   const validationResult = await action({
     params,
@@ -196,9 +196,7 @@ export async function editQuestion(
 
     // 1️⃣3️⃣ Fetch and return updated question
 
-    const updatedQuestion = await Question.findById(questionId)
-      .populate("tags") // optional: populate tag details
-      .lean();
+    const updatedQuestion = await Question.findById(questionId).lean();
 
     if (!updatedQuestion) throw new Error("Question not found after update");
 
@@ -231,8 +229,8 @@ export async function getQuestion(
   try {
     // 2️⃣ Fetch question and populate tags
     const question = await Question.findById(questionId)
-      .populate("tags", "name")
-      .populate("author", "name image")
+      .populate<{ tags: Tag[] }>("tags", "name")
+      .populate<{ author: Author }>("author", "name image")
       .lean();
 
     if (!question) throw new Error("Question not found");
@@ -293,8 +291,8 @@ export async function getQuestions(
     const totalQuestions = await Question.countDocuments(filterQuery);
 
     const questions = await Question.find(filterQuery)
-      .populate("tags", "name")
-      .populate("author", "name image")
+      .populate<{ tags: Tag[] }>("tags", "name")
+      .populate<{ author: Author }>("author", "name image")
       .lean()
       .sort(sortCriteria)
       .skip(skip)

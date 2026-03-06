@@ -117,6 +117,13 @@ export const AnswerServerSchema = AnswerSchema.extend({
   questionId: z.string().min(1, { error: "Question ID is required." }),
 });
 
+export const GetAnswersSchema = BasePaginatedSearchParamsSchema.extend({
+  questionId: z.string().min(1, { error: "Question ID is required." }),
+}).transform((data) => ({
+  ...data,
+  skip: (data.page - 1) * data.pageSize,
+}));
+
 export const UserSchema = z.object({
   name: z.string().min(1, { error: "Name is required." }),
   username: z

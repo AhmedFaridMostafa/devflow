@@ -8,7 +8,6 @@ import DataRenderer from "@/components/DataRenderer";
 import QuestionCard from "@/components/cards/QuestionCard";
 import { EMPTY_QUESTION } from "@/constants/states";
 
-
 const Home = async ({ searchParams }: RouteParams) => {
   const { page, pageSize, query, filter } = await searchParams;
 
@@ -19,20 +18,23 @@ const Home = async ({ searchParams }: RouteParams) => {
     filter: filter || "",
   });
 
-
   return (
     <>
       <section className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">
         <h1 className="h1-bold text-dark100_light900">All Questions</h1>
         <Button
           className="primary-gradient min-h-[46px] px-4 py-3 text-light-900!"
-          asChild
-        >
+          asChild>
           <Link href={ROUTES.ASK_QUESTION}>Ask a Question</Link>
         </Button>
       </section>
       <section className="mt-11">
-        <LocalSearch route="/" imgSrc="/icons/search.svg" placeholder="Search questions..." otherClasses="flex-1" />
+        <LocalSearch
+          route="/"
+          imgSrc="/icons/search.svg"
+          placeholder="Search questions..."
+          otherClasses="flex-1"
+        />
       </section>
       <HomeFilter />
 
@@ -48,9 +50,8 @@ const Home = async ({ searchParams }: RouteParams) => {
           </div>
         )}
       />
-
     </>
   );
 };
 
-export default Home
+export default Home;

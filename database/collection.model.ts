@@ -10,6 +10,8 @@ import {
 export interface ICollection {
   author: Types.ObjectId;
   question: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type ICollectionDoc = HydratedDocument<ICollection>;

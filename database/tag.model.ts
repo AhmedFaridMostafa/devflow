@@ -3,6 +3,8 @@ import { Model, HydratedDocument, model, models, Schema } from "mongoose";
 export interface ITag {
   name: string;
   questions: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type ITagDoc = HydratedDocument<ITag>;

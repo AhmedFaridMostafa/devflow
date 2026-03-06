@@ -10,7 +10,7 @@ import { serialize } from "../utils";
 
 export const getTags = async (
   params: PaginatedSearchParams,
-  ): Promise<ActionResponse<{ tags: Tag[]; isNext: boolean }>> => {
+): Promise<ActionResponse<{ tags: Tag[]; isNext: boolean }>> => {
   const validationResult = await action({
     params,
     schema: PaginatedSearchParamsSchema,
@@ -88,7 +88,7 @@ export const getTagQuestions = async (
   const { tagId, skip, pageSize = 10, query } = validationResult.params;
 
   try {
-    const tag = await Tag.findById(tagId);
+    const tag = await Tag.findById(tagId).lean();
     if (!tag) throw new Error("Tag not found");
 
     const filterQuery: QueryFilter<typeof Question> = {
@@ -102,12 +102,12 @@ export const getTagQuestions = async (
     const totalQuestions = await Question.countDocuments(filterQuery);
 
     const questions = await Question.find(filterQuery)
-      .lean()
       .select("_id title views answers upvotes downvotes author createdAt")
-      .populate([
+      .populate<{ author: Author; tags: Tag[] }>([
         { path: "author", select: "name image" },
         { path: "tags", select: "name" },
       ])
+      .lean()
       .skip(skip)
       .limit(pageSize);
 

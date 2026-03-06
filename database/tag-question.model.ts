@@ -10,6 +10,8 @@ import {
 export interface ITagQuestion {
   tag: Types.ObjectId;
   question: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type ITagQuestionDoc = HydratedDocument<ITagQuestion>;

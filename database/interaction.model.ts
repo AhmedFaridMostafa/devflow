@@ -12,6 +12,8 @@ export interface IInteraction {
   action: string;
   actionId: Types.ObjectId;
   actionType: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const InteractionActionEnums = [

@@ -1,5 +1,3 @@
-import { SocialAuthProvider } from "@/types/auth";
-
 export const SOCIAL_AUTH_PROVIDERS: SocialAuthProvider[] = [
   {
     provider: "github",
