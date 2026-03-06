@@ -12,6 +12,7 @@ import AnswerForm from "@/components/forms/AnswerForm";
 import { auth } from "@/auth";
 import LoginToAnswer from "@/components/LoginToAnswer";
 import { getAnswers } from "@/lib/actions/answer.action";
+import AllAnswers from "@/components/answers/AllAnswers";
 
 const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
   const [{ id }, { page, pageSize, filter }] = await Promise.all([
@@ -37,7 +38,6 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
     filter,
   });
 
-  console.log(answersResult);
   const { _id, title, author, createdAt, answers, views, tags, content } =
     questionResult.data;
 
@@ -100,7 +100,9 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
           <TagCard key={tag._id} _id={tag._id} name={tag.name} compact />
         ))}
       </div>
-
+      <section className="my-5">
+        <AllAnswers {...answersResult} />
+      </section>
       <section className="my-5">
         {season?.user?.id ? (
           <AnswerForm
