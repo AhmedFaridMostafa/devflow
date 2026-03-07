@@ -13,6 +13,8 @@ import { auth } from "@/auth";
 import LoginToAnswer from "@/components/LoginToAnswer";
 import { getAnswers } from "@/lib/actions/answer.action";
 import AllAnswers from "@/components/answers/AllAnswers";
+import Votes from "@/components/votes/Votes";
+import { hasVoted } from "@/lib/actions/vote.action";
 
 const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
   const [{ id }, { page, pageSize, filter }] = await Promise.all([
@@ -38,8 +40,23 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
     filter,
   });
 
-  const { _id, title, author, createdAt, answers, views, tags, content } =
-    questionResult.data;
+  const {
+    _id: questionId,
+    title,
+    author,
+    createdAt,
+    answers,
+    views,
+    tags,
+    content,
+    downvotes,
+    upvotes,
+  } = questionResult.data;
+
+  const hasVotedPromise = hasVoted({
+    targetId: questionId,
+    targetType: "question",
+  });
 
   return (
     <>
@@ -60,7 +77,14 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
           </div>
 
           <div className="flex justify-end">
-            <p>Votes</p>
+            <Votes
+              targetType="question"
+              upvotes={upvotes}
+              downvotes={downvotes}
+              targetId={questionId}
+              hasVotedPromise={hasVotedPromise}
+              userId={season?.user?.id || ""}
+            />
           </div>
         </div>
 
@@ -106,7 +130,7 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
       <section className="my-5">
         {season?.user?.id ? (
           <AnswerForm
-            questionId={_id}
+            questionId={questionId}
             questionTitle={title}
             questionContent={content}
           />
