@@ -176,3 +176,18 @@ export const SignInWithOAuthSchema = z.object({
     image: z.url("Invalid image URL").optional(),
   }),
 });
+
+export const AIAnswerSchema = z.object({
+  question: z
+    .string()
+    .min(5, {
+      error: "Question title must be at least 5 characters.",
+    })
+    .max(130, {
+      error: "Question title mustn't be longer then 130 characters.",
+    }),
+  content: z.string().min(100, {
+    error: "Question description must have Minimum of 100 characters.",
+  }),
+  userAnswer: z.string().optional(),
+});
