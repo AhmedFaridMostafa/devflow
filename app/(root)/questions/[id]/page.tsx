@@ -15,6 +15,8 @@ import { getAnswers } from "@/lib/actions/answer.action";
 import AllAnswers from "@/components/answers/AllAnswers";
 import Votes from "@/components/votes/Votes";
 import { hasVoted } from "@/lib/actions/vote.action";
+import { Suspense } from "react";
+import { Spinner } from "@/components/ui/spinner";
 
 const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
   const [{ id }, { page, pageSize, filter }] = await Promise.all([
@@ -77,14 +79,16 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
           </div>
 
           <div className="flex justify-end">
-            <Votes
-              targetType="question"
-              upvotes={upvotes}
-              downvotes={downvotes}
-              targetId={questionId}
-              hasVotedPromise={hasVotedPromise}
-              userId={season?.user?.id || ""}
-            />
+            <Suspense fallback={<Spinner />}>
+              <Votes
+                targetType="question"
+                upvotes={upvotes}
+                downvotes={downvotes}
+                targetId={questionId}
+                hasVotedPromise={hasVotedPromise}
+                userId={season?.user?.id || ""}
+              />
+            </Suspense>
           </div>
         </div>
 

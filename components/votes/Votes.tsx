@@ -29,7 +29,7 @@ const Votes = ({
 
   const { hasUpvoted, hasDownvoted } = votedResult.success
     ? votedResult.data
-    : {};
+    : { hasUpvoted: false, hasDownvoted: false };
 
   const handleVote = (voteType: "upvote" | "downvote") => {
     startVoteTransition(async () => {
