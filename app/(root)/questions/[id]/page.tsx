@@ -18,6 +18,7 @@ import { hasVoted } from "@/lib/actions/vote.action";
 import { Suspense } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import SaveQuestion from "@/components/questions/SaveQuestion";
+import { hasSavedQuestion } from "@/lib/actions/collection.action";
 
 const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
   const [{ id }, { page, pageSize, filter }] = await Promise.all([
@@ -61,6 +62,10 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
     targetType: "question",
   });
 
+  const hasSavedQuestionPromise = hasSavedQuestion({
+    questionId: questionId,
+  });
+
   return (
     <>
       <div className="flex-start w-full flex-col">
@@ -79,7 +84,7 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
             </Link>
           </div>
 
-          <div className="flex justify-end gap-1.5">
+          <div className="flex justify-end gap-4">
             <Suspense fallback={<Spinner />}>
               <Votes
                 targetType="question"
@@ -94,6 +99,7 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
               <SaveQuestion
                 questionId={questionId}
                 userId={season?.user?.id || ""}
+                hasSavedQuestionPromise={hasSavedQuestionPromise}
               />
             </Suspense>
           </div>

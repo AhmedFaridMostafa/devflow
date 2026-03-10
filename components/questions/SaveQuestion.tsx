@@ -1,21 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { useTransition } from "react";
+import { use, useTransition } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import { toggleSaveQuestion } from "@/lib/actions/collection.action";
-
+interface SaveQuestionProps {
+  questionId: string;
+  userId: string;
+  hasSavedQuestionPromise: Promise<ActionResponse<{ saved: boolean }>>;
+}
 const SaveQuestion = ({
   questionId,
   userId,
-}: {
-  questionId: string;
-  userId: string;
-}) => {
+  hasSavedQuestionPromise,
+}: SaveQuestionProps) => {
+  const data = use(hasSavedQuestionPromise);
+  const hasSaved = data.success ? data.data.saved : false;
   const [isSave, startSaveTransition] = useTransition();
-
   const handleSave = () => {
     startSaveTransition(async () => {
       if (!userId) {
@@ -39,8 +42,6 @@ const SaveQuestion = ({
       }
     });
   };
-
-  const hasSaved = false;
 
   return (
     <Image
