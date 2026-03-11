@@ -119,7 +119,7 @@ export async function getSavedQuestions(
 
   const { skip, pageSize, query, filter } = validationResult.params;
 
-  const sortOptions: Record<string, Record<string, 1 | -1>> = {
+  const SORT_OPTIONS: Record<string, Record<string, 1 | -1>> = {
     mostrecent: { "question.createdAt": -1 },
     oldest: { "question.createdAt": 1 },
     mostvoted: { "question.upvotes": -1 },
@@ -127,7 +127,7 @@ export async function getSavedQuestions(
     mostanswered: { "question.answers": -1 },
   };
 
-  const sortCriteria = sortOptions[filter || "mostrecent"];
+  const sortCriteria = SORT_OPTIONS[filter || "mostrecent"];
 
   try {
     const pipeline: PipelineStage[] = [
@@ -171,21 +171,28 @@ export async function getSavedQuestions(
       });
     }
 
-    const [totalCount = { count: 0 }] = await Collection.aggregate([
+    const result = await Collection.aggregate<{
+      metadata: { total: number }[];
+      questions: Collection[];
+    }>([
       ...pipeline,
-      { $count: "count" },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          questions: [
+            { $sort: sortCriteria },
+            { $skip: skip },
+            { $limit: pageSize },
+            { $project: { question: 1, author: 1 } },
+          ],
+        },
+      },
     ]);
 
-    pipeline.push(
-      { $sort: sortCriteria },
-      { $skip: skip },
-      { $limit: pageSize },
-    );
-    pipeline.push({ $project: { question: 1, author: 1 } });
+    const total = result[0]?.metadata[0]?.total ?? 0;
+    const questions = result[0]?.questions ?? [];
 
-    const questions = await Collection.aggregate(pipeline);
-
-    const isNext = totalCount.count > skip + questions.length;
+    const isNext = total > skip + questions.length;
 
     return {
       success: true,
