@@ -9,6 +9,9 @@
     "downvotes",
     "mdxeditor",
     "upserted",
-    "upvotes"
+    "upvotes",
+    "mostvoted",
+    "mostviewed",
+    "mostanswered"
   ]
 }

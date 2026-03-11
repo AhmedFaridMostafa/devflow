@@ -64,3 +64,9 @@ interface Answer {
   createdAt: string;
   updatedAt: string;
 }
+
+interface Collection {
+  _id: string;
+  author: string | Author;
+  question: Question;
+}
