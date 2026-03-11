@@ -79,3 +79,7 @@ export function formatNumber(number: number) {
     return number.toString();
   }
 }
+
+export const escapeRegex = (value?: string) => {
+  return value?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};

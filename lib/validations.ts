@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { escapeRegex } from "./utils";
 
 export const SignInSchema = z.object({
   email: z
@@ -87,7 +88,11 @@ export const GetQuestionSchema = z.object({
 const BasePaginatedSearchParamsSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(10),
-  query: z.string().trim().optional(),
+  query: z
+    .string()
+    .trim()
+    .optional()
+    .transform((val) => (val ? escapeRegex(val) : val)),
   filter: z.string().trim().optional(),
   sort: z.string().trim().optional(),
 });
