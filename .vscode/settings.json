@@ -4,11 +4,14 @@
     "*.css": "tailwindcss"
   },
   "cSpell.words": [
+    "currentcolor",
+    "darkgradient",
     "darknone",
     "Devflow",
     "devicon",
     "Downvoted",
     "downvotes",
+    "grotesk",
     "mdxeditor",
     "mostanswered",
     "mostviewed",
