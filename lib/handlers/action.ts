@@ -57,7 +57,8 @@ async function action<S extends z.ZodType, A extends boolean = false>(
 
   if (authorize) {
     const rawSession = await auth();
-    if (!rawSession?.user) return new UnauthorizedError();
+    if (!rawSession?.user || !rawSession?.user?.id)
+      return new UnauthorizedError();
     session = rawSession as AuthorizedSession;
   }
 
