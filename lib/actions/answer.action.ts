@@ -1,6 +1,5 @@
 "use server";
 
-import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 
 import ROUTES from "@/constants/routes";
@@ -11,6 +10,7 @@ import action from "../handlers/action";
 import handleError from "../handlers/error";
 import { AnswerServerSchema, GetAnswersSchema } from "../validations";
 import { serialize, type Serialize } from "../utils";
+import withTransaction from "../handlers/transaction";
 
 export async function createAnswer(
   params: CreateAnswerParams,
@@ -21,38 +21,35 @@ export async function createAnswer(
     authorize: true,
   });
 
-  if (validationResult instanceof Error) {
-    return handleError(validationResult) as ErrorResponse;
-  }
+  if (validationResult instanceof Error) return handleError(validationResult);
 
   const { content, questionId } = validationResult.params;
   const userId = validationResult.session.user.id;
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    const question = await Question.findById(questionId);
+    const newAnswer = await withTransaction(async (session) => {
+      const question = await Question.findById(questionId);
 
-    if (!question) throw new Error("Question not found");
+      if (!question) throw new Error("Question not found");
 
-    const [newAnswer] = await Answer.create(
-      [
-        {
-          author: userId,
-          question: questionId,
-          content,
-        },
-      ],
-      { session },
-    );
+      const [newAnswer] = await Answer.create(
+        [
+          {
+            author: userId,
+            question: questionId,
+            content,
+          },
+        ],
+        { session },
+      );
 
-    if (!newAnswer) throw new Error("Failed to create answer");
+      if (!newAnswer) throw new Error("Failed to create answer");
 
-    question.answers += 1;
-    await question.save({ session });
+      question.answers += 1;
+      await question.save({ session });
 
-    await session.commitTransaction();
+      return newAnswer;
+    });
 
     revalidatePath(ROUTES.QUESTION(questionId));
 
@@ -61,10 +58,7 @@ export async function createAnswer(
       data: serialize(newAnswer),
     };
   } catch (error) {
-    await session.abortTransaction();
-    return handleError(error) as ErrorResponse;
-  } finally {
-    await session.endSession();
+    return handleError(error);
   }
 }
 
@@ -80,9 +74,7 @@ export async function getAnswers(params: GetAnswersParams): Promise<
     schema: GetAnswersSchema,
   });
 
-  if (validationResult instanceof Error) {
-    return handleError(validationResult) as ErrorResponse;
-  }
+  if (validationResult instanceof Error) return handleError(validationResult);
 
   const { questionId, skip, pageSize, filter } = validationResult.params;
 
@@ -104,14 +96,15 @@ export async function getAnswers(params: GetAnswersParams): Promise<
   }
 
   try {
-    const totalAnswers = await Answer.countDocuments({ question: questionId });
-
-    const answers = await Answer.find({ question: questionId })
-      .populate<{ author: Author }>("author", "_id name image")
-      .lean()
-      .sort(sortCriteria)
-      .skip(skip)
-      .limit(pageSize);
+    const [totalAnswers, answers] = await Promise.all([
+      Answer.countDocuments({ question: questionId }),
+      Answer.find({ question: questionId })
+        .populate<{ author: Author }>("author", "name image")
+        .lean()
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(pageSize),
+    ]);
 
     const isNext = totalAnswers > skip + answers.length;
 
@@ -124,6 +117,6 @@ export async function getAnswers(params: GetAnswersParams): Promise<
       },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

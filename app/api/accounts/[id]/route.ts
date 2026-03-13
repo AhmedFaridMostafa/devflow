@@ -9,7 +9,7 @@ import { AccountSchema } from "@/lib/validations";
 // GET /api/accounts/[id]
 export async function GET(
   _: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   if (!id) throw new NotFoundError("Account");
@@ -22,14 +22,14 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: account }, { status: 200 });
   } catch (error) {
-    return handleError(error, "api") as APIErrorResponse;
+    return handleError(error, "api");
   }
 }
 
 // DELETE /api/accounts/[id]
 export async function DELETE(
   _: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   if (!id) throw new NotFoundError("Account");
@@ -42,14 +42,14 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, data: account }, { status: 200 });
   } catch (error) {
-    return handleError(error, "api") as APIErrorResponse;
+    return handleError(error, "api");
   }
 }
 
 // PUT /api/accounts/[id]
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   if (!id) throw new NotFoundError("Account");
@@ -71,9 +71,9 @@ export async function PUT(
 
     return NextResponse.json(
       { success: true, data: updatedAccount },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
-    return handleError(error, "api") as APIErrorResponse;
+    return handleError(error, "api");
   }
 }

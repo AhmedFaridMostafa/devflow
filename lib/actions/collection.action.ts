@@ -23,9 +23,7 @@ export async function toggleSaveQuestion(
     authorize: true,
   });
 
-  if (validationResult instanceof Error) {
-    return handleError(validationResult) as ErrorResponse;
-  }
+  if (validationResult instanceof Error) return handleError(validationResult);
 
   const { questionId } = validationResult.params;
   const userId = validationResult.session.user.id;
@@ -41,7 +39,6 @@ export async function toggleSaveQuestion(
 
     if (collection) {
       await Collection.findByIdAndDelete(collection.id);
-
       revalidatePath(ROUTES.QUESTION(questionId));
       return {
         success: true,
@@ -55,9 +52,7 @@ export async function toggleSaveQuestion(
       question: questionId,
       author: userId,
     });
-
     revalidatePath(ROUTES.QUESTION(questionId));
-
     return {
       success: true,
       data: {
@@ -65,7 +60,7 @@ export async function toggleSaveQuestion(
       },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -78,9 +73,7 @@ export async function hasSavedQuestion(
     authorize: true,
   });
 
-  if (validationResult instanceof Error) {
-    return handleError(validationResult) as ErrorResponse;
-  }
+  if (validationResult instanceof Error) return handleError(validationResult);
 
   const { questionId } = validationResult.params;
   const userId = validationResult.session.user.id;
@@ -98,7 +91,7 @@ export async function hasSavedQuestion(
       },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -111,9 +104,7 @@ export async function getSavedQuestions(
     authorize: true,
   });
 
-  if (validationResult instanceof Error) {
-    return handleError(validationResult) as ErrorResponse;
-  }
+  if (validationResult instanceof Error) return handleError(validationResult);
 
   const userId = validationResult.session.user.id;
 
@@ -199,6 +190,6 @@ export async function getSavedQuestions(
       data: { collection: serialize(questions), isNext },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

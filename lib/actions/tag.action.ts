@@ -16,9 +16,7 @@ export const getTags = async (
     schema: PaginatedSearchParamsSchema,
   });
 
-  if (validationResult instanceof Error) {
-    return handleError(validationResult) as ErrorResponse;
-  }
+  if (validationResult instanceof Error) return handleError(validationResult);
 
   const { pageSize, query, filter, skip } = validationResult.params;
 
@@ -49,13 +47,14 @@ export const getTags = async (
   }
 
   try {
-    const totalTags = await Tag.countDocuments(filterQuery);
-
-    const tags = await Tag.find(filterQuery)
-      .lean()
-      .sort(sortCriteria)
-      .skip(skip)
-      .limit(pageSize);
+    const [totalTags, tags] = await Promise.all([
+      Tag.countDocuments(filterQuery),
+      Tag.find(filterQuery)
+        .lean()
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(pageSize),
+    ]);
 
     const isNext = totalTags > skip + tags.length;
 
@@ -67,7 +66,7 @@ export const getTags = async (
       },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 };
 
@@ -81,9 +80,7 @@ export const getTagQuestions = async (
     schema: GetTagQuestionsSchema,
   });
 
-  if (validationResult instanceof Error) {
-    return handleError(validationResult) as ErrorResponse;
-  }
+  if (validationResult instanceof Error) return handleError(validationResult);
 
   const { tagId, skip, pageSize = 10, query } = validationResult.params;
 
@@ -99,17 +96,18 @@ export const getTagQuestions = async (
       filterQuery.title = { $regex: query, $options: "i" };
     }
 
-    const totalQuestions = await Question.countDocuments(filterQuery);
-
-    const questions = await Question.find(filterQuery)
-      .select("_id title views answers upvotes downvotes author createdAt")
-      .populate<{ author: Author; tags: Tag[] }>([
-        { path: "author", select: "name image" },
-        { path: "tags", select: "name" },
-      ])
-      .lean()
-      .skip(skip)
-      .limit(pageSize);
+    const [totalQuestions, questions] = await Promise.all([
+      Question.countDocuments(filterQuery),
+      Question.find(filterQuery)
+        .select("_id title views answers upvotes downvotes author createdAt")
+        .populate<{ author: Author; tags: Tag[] }>([
+          { path: "author", select: "name image" },
+          { path: "tags", select: "name" },
+        ])
+        .lean()
+        .skip(skip)
+        .limit(pageSize),
+    ]);
 
     const isNext = totalQuestions > skip + questions.length;
 
@@ -122,6 +120,6 @@ export const getTagQuestions = async (
       },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 };

@@ -20,10 +20,7 @@ export async function getUsers(params: PaginatedSearchParams): Promise<
     params,
     schema: PaginatedSearchParamsSchema,
   });
-
-  if (validationResult instanceof Error) {
-    return handleError(validationResult) as ErrorResponse;
-  }
+  if (validationResult instanceof Error) return handleError(validationResult);
 
   const { skip, pageSize, query, filter } = validationResult.params;
 
@@ -64,6 +61,6 @@ export async function getUsers(params: PaginatedSearchParams): Promise<
       },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

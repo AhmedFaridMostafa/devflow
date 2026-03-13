@@ -38,6 +38,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: text }, { status: 200 });
   } catch (error) {
-    return handleError(error, "api") as APIErrorResponse;
+    return handleError(error, "api");
   }
 }
