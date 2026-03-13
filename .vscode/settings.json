@@ -1,17 +1,19 @@
 {
+  "tailwindCSS.experimental.configFile": "app/globals.css",
   "files.associations": {
     "*.css": "tailwindcss"
   },
   "cSpell.words": [
+    "darknone",
     "Devflow",
     "devicon",
     "Downvoted",
     "downvotes",
     "mdxeditor",
-    "upserted",
-    "upvotes",
-    "mostvoted",
+    "mostanswered",
     "mostviewed",
-    "mostanswered"
+    "mostvoted",
+    "upserted",
+    "upvotes"
   ]
 }
