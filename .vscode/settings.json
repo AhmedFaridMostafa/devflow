@@ -3,6 +3,12 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
+  "tailwindCSS.experimental.classRegex": [
+    // JSX attribute syntax: containerClassName="..." selectClassName="..."
+    ["[a-zA-Z]*[Cc]lassName\\s*=\\s*[\"']([^\"']*)[\"']", "([^\\s\"']+)"],
+    // cn()/clsx() calls
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^'\"`]*)(?:'|\"|`)"]
+  ],
   "cSpell.words": [
     "currentcolor",
     "darkgradient",

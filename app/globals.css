@@ -54,6 +54,9 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+  body {
+    @apply bg-light-900 dark:bg-dark-100 text-dark-100 dark:text-light-900;
+  }
 }
 
 @utility background-light850_dark100 {
@@ -137,7 +140,6 @@
 }
 
 @utility text-light400_light500 {
-  @apply text-light-400! dark:text-light-500!;
   @apply text-light-400! dark:text-light-500!;
 }
 
@@ -258,11 +260,6 @@
 }
 
 @utility dark-gradient {
-  background: linear-gradient(
-    232deg,
-    rgba(23, 28, 35, 0.41) 0%,
-    rgba(19, 22, 28, 0.7) 100%
-  );
   background: linear-gradient(
     232deg,
     rgba(23, 28, 35, 0.41) 0%,
