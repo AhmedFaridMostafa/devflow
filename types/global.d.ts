@@ -31,11 +31,11 @@ type SuccessResponse<T = null> = {
 
 type ErrorResponse = {
   success: false;
+  status: number;
   error: {
     message: string;
     details?: Record<string, string[]>;
   };
-  status?: number;
 };
 
 type ActionResponse<T = null> = SuccessResponse<T> | ErrorResponse;

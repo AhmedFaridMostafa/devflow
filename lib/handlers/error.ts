@@ -9,29 +9,39 @@ export type ResponseType = "api" | "server";
 export const getZodFieldErrors = (
   error: ZodError,
 ): Record<string, string[]> => {
-  return flattenError(error).fieldErrors;
+  const { fieldErrors, formErrors } = flattenError(error);
+  return {
+    ...(fieldErrors as Record<string, string[]>),
+    ...(formErrors.length > 0 && { _form: formErrors }),
+  };
 };
 
 const formatResponse = (
   responseType: ResponseType,
   status: number,
   message: string,
-  errors?: Record<string, string[]> | undefined,
-) => {
+  errors?: Record<string, string[]>,
+): NextResponse | ErrorResponse => {
   const responseContent = {
-    success: false,
+    success: false as const,
+    status,
     error: {
       message,
-      details: errors,
+      ...(errors && { details: errors }),
     },
   };
 
   return responseType === "api"
     ? NextResponse.json(responseContent, { status })
-    : { status, ...responseContent };
+    : responseContent;
 };
 
-const handleError = (error: unknown, responseType: ResponseType = "server") => {
+function handleError(error: unknown, responseType: "api"): NextResponse;
+function handleError(error: unknown, responseType?: "server"): ErrorResponse;
+function handleError(
+  error: unknown,
+  responseType: ResponseType = "server",
+): NextResponse | ErrorResponse {
   if (error instanceof RequestError) {
     logger.error(
       { err: error },
@@ -63,11 +73,12 @@ const handleError = (error: unknown, responseType: ResponseType = "server") => {
   }
 
   if (error instanceof Error) {
-    logger.error(error.message);
-    return formatResponse(responseType, 500, error.message);
+    logger.error({ err: error }, error.message);
+    return formatResponse(responseType, 500, "An unexpected error occurred");
   }
+
   logger.error({ err: error }, "An unexpected error occurred");
   return formatResponse(responseType, 500, "An unexpected error occurred");
-};
+}
 
 export default handleError;
