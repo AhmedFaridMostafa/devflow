@@ -4,12 +4,15 @@ import AnswerCard from "../cards/AnswerCard";
 import DataRenderer from "../DataRenderer";
 import CommonFilter from "../filter/CommonFilter";
 import { AnswerFilters } from "@/constants/filters";
+import Pagination from "../Pagination";
 
 type AllAnswersProps = ActionResponse<{
   answers: Answer[];
   isNext: boolean;
   totalAnswers: number;
-}>;
+}> & {
+  page: number;
+};
 
 const AllAnswers = (props: AllAnswersProps) => {
   return (
@@ -34,6 +37,10 @@ const AllAnswers = (props: AllAnswersProps) => {
         render={(answers) =>
           answers.map((answer) => <AnswerCard key={answer._id} {...answer} />)
         }
+      />
+      <Pagination
+        page={props.page}
+        isNext={props.success ? props.data.isNext : false}
       />
     </div>
   );

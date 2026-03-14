@@ -9,6 +9,7 @@ import QuestionCard from "@/components/cards/QuestionCard";
 import { EMPTY_QUESTION } from "@/constants/states";
 import { HomePageFilters } from "@/constants/filters";
 import CommonFilter from "@/components/filter/CommonFilter";
+import Pagination from "@/components/Pagination";
 
 const Home = async ({ searchParams }: RouteParams) => {
   const { page, pageSize, query, filter } = await searchParams;
@@ -57,6 +58,10 @@ const Home = async ({ searchParams }: RouteParams) => {
             ))}
           </div>
         )}
+      />
+      <Pagination
+        page={page}
+        isNext={result.success ? result.data.isNext : false}
       />
     </>
   );

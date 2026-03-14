@@ -6,6 +6,7 @@ import CommonFilter from "@/components/filter/CommonFilter";
 import { EMPTY_QUESTION } from "@/constants/states";
 import { getSavedQuestions } from "@/lib/actions/collection.action";
 import { CollectionFilters } from "@/constants/filters";
+import Pagination from "@/components/Pagination";
 
 const Collections = async ({ searchParams }: RouteParams) => {
   const { page, pageSize, query, filter } = await searchParams;
@@ -42,6 +43,10 @@ const Collections = async ({ searchParams }: RouteParams) => {
             ))}
           </div>
         )}
+      />
+      <Pagination
+        page={page}
+        isNext={result.success ? result.data.isNext : false}
       />
     </>
   );

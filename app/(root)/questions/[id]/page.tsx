@@ -142,7 +142,7 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
         ))}
       </div>
       <section className="my-5">
-        <AllAnswers {...answersResult} />
+        <AllAnswers page={Number(page) || 1} {...answersResult} />
       </section>
       <section className="my-5">
         {season?.user?.id ? (
