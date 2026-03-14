@@ -2,6 +2,8 @@ import { EMPTY_ANSWERS } from "@/constants/states";
 
 import AnswerCard from "../cards/AnswerCard";
 import DataRenderer from "../DataRenderer";
+import CommonFilter from "../filter/CommonFilter";
+import { AnswerFilters } from "@/constants/filters";
 
 type AllAnswersProps = ActionResponse<{
   answers: Answer[];
@@ -19,7 +21,11 @@ const AllAnswers = (props: AllAnswersProps) => {
             {props.data.totalAnswers === 1 ? "Answer" : "Answers"}
           </h3>
         )}
-        <p>Filters</p>
+        <CommonFilter
+          filters={AnswerFilters}
+          selectClassName="sm:min-w-32"
+          containerClassName="max-xs:w-full"
+        />
       </div>
       <DataRenderer
         response={props}

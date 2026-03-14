@@ -2,8 +2,10 @@ import QuestionCard from "@/components/cards/QuestionCard";
 import DataRenderer from "@/components/DataRenderer";
 import LocalSearch from "@/components/search/LocalSearch";
 import ROUTES from "@/constants/routes";
+import CommonFilter from "@/components/filter/CommonFilter";
 import { EMPTY_QUESTION } from "@/constants/states";
 import { getSavedQuestions } from "@/lib/actions/collection.action";
+import { CollectionFilters } from "@/constants/filters";
 
 const Collections = async ({ searchParams }: RouteParams) => {
   const { page, pageSize, query, filter } = await searchParams;
@@ -22,7 +24,11 @@ const Collections = async ({ searchParams }: RouteParams) => {
           route={ROUTES.COLLECTION}
           imgSrc="/icons/search.svg"
           placeholder="Search questions..."
-          otherClasses="flex-1"
+          containerClassName="flex-1"
+        />
+        <CommonFilter
+          filters={CollectionFilters}
+          selectClassName="min-h-14 sm:min-w-42.5"
         />
       </div>
       <DataRenderer

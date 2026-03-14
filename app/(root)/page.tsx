@@ -36,7 +36,7 @@ const Home = async ({ searchParams }: RouteParams) => {
           route="/"
           imgSrc="/icons/search.svg"
           placeholder="Search questions..."
-          otherClasses="flex-1"
+          containerClassName="flex-1"
         />
         <CommonFilter
           filters={HomePageFilters}
