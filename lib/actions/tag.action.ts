@@ -7,6 +7,7 @@ import {
 } from "../validations";
 import { Question, Tag } from "@/database";
 import { serialize } from "../utils";
+import dbConnect from "../mongoose";
 
 export const getTags = async (
   params: PaginatedSearchParams,
@@ -121,5 +122,20 @@ export const getTagQuestions = async (
     };
   } catch (error) {
     return handleError(error);
+  }
+};
+
+export const getTopTags = async (): Promise<ActionResponse<Tag[]>> => {
+  try {
+    await dbConnect();
+
+    const tags = await Tag.find().sort({ questions: -1 }).limit(5);
+
+    return {
+      success: true,
+      data: serialize(tags),
+    };
+  } catch (error) {
+    return handleError(error) as ErrorResponse;
   }
 };

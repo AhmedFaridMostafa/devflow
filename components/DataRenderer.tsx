@@ -11,7 +11,7 @@ interface ButtonLink {
 
 type DataRendererProps<T, D> = {
   response: ActionResponse<D>;
-  selector?: (data: D) => T[];
+  selector: (data: D) => T[];
   empty?: { title: string; message: string; button?: ButtonLink };
   render: (data: T[]) => React.ReactNode;
 };
@@ -88,7 +88,7 @@ const DataRenderer = <T, D>({
       />
     );
   }
-  const data = selector ? selector(response.data) : (response.data as T[]);
+  const data = selector(response.data) || [];
 
   if (!data || data.length === 0) {
     return (

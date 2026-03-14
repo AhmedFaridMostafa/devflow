@@ -1,6 +1,7 @@
 interface Tag {
   _id: string;
   name: string;
+  questions: number;
 }
 
 interface Author {
@@ -82,3 +83,5 @@ interface User {
   portfolio?: string;
   reputation?: number;
 }
+
+type HotQuestion = Pick<Question, "_id" | "title">;

@@ -20,6 +20,7 @@ import { revalidatePath } from "next/cache";
 import ROUTES from "@/constants/routes";
 import withTransaction from "../handlers/transaction";
 import { UnauthorizedError } from "../http-errors";
+import dbConnect from "../mongoose";
 
 export async function createQuestion(
   params: CreateQuestionParams,
@@ -310,6 +311,36 @@ export async function incrementViews(
     return {
       success: true,
       data: { views: question.views },
+    };
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function getHotQuestions(): Promise<
+  ActionResponse<HotQuestion[]>
+> {
+  try {
+    await dbConnect();
+    const questions = await Question.aggregate<Question>([
+      {
+        $addFields: {
+          hotScore: { $add: ["$views", { $multiply: ["$upvotes", 5] }] },
+        },
+      },
+      { $sort: { hotScore: -1 } },
+      { $limit: 5 },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+        },
+      },
+    ]);
+
+    return {
+      success: true,
+      data: serialize(questions),
     };
   } catch (error) {
     return handleError(error);
