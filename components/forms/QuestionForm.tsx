@@ -135,7 +135,8 @@ const QuestionForm = ({ mode }: QuestionFormProps) => {
   return (
     <form
       className="flex w-full flex-col gap-10"
-      onSubmit={form.handleSubmit(handleCreateQuestion)}>
+      onSubmit={form.handleSubmit(handleCreateQuestion)}
+    >
       <FieldGroup>
         <Controller
           name="title"
@@ -143,16 +144,18 @@ const QuestionForm = ({ mode }: QuestionFormProps) => {
           render={({ field, fieldState }) => (
             <Field
               data-invalid={fieldState.invalid}
-              className="flex w-full flex-col">
+              className="flex w-full flex-col"
+            >
               <FieldLabel
                 htmlFor={field.name}
-                className="paragraph-semibold text-dark400_light800">
+                className="paragraph-semibold text-dark400_light800"
+              >
                 Question Title <span className="text-primary-500">*</span>
               </FieldLabel>
 
               <Input
                 id={field.name}
-                className="paragraph-regular background-light700_dark300 light-border-2 text-dark300_light700 no-focus min-h-[56px] border"
+                className="paragraph-regular background-light700_dark300 light-border-2 text-dark300_light700 no-focus min-h-14 border"
                 aria-invalid={fieldState.invalid}
                 {...field}
               />
@@ -173,7 +176,8 @@ const QuestionForm = ({ mode }: QuestionFormProps) => {
           render={({ field, fieldState }) => (
             <Field
               data-invalid={fieldState.invalid}
-              className="flex w-full flex-col">
+              className="flex w-full flex-col"
+            >
               <FieldLabel className="paragraph-semibold text-dark400_light800">
                 Detailed explanation of your problem{" "}
                 <span className="text-primary-500">*</span>
@@ -197,17 +201,19 @@ const QuestionForm = ({ mode }: QuestionFormProps) => {
           render={({ field, fieldState }) => (
             <Field
               data-invalid={fieldState.invalid}
-              className="flex w-full flex-col gap-3">
+              className="flex w-full flex-col gap-3"
+            >
               <FieldLabel
                 htmlFor={field.name}
-                className="paragraph-semibold text-dark400_light800">
+                className="paragraph-semibold text-dark400_light800"
+              >
                 Tags <span className="text-primary-500">*</span>
               </FieldLabel>
 
               <div>
                 <Input
                   id={field.name}
-                  className="paragraph-regular background-light700_dark300 light-border-2 text-dark300_light700 no-focus min-h-[56px] border"
+                  className="paragraph-regular background-light700_dark300 light-border-2 text-dark300_light700 no-focus min-h-14 border"
                   placeholder="Add tags..."
                   aria-invalid={fieldState.invalid}
                   onKeyDown={(e) => handleInputKeyDown(e, field.value)}
@@ -244,7 +250,8 @@ const QuestionForm = ({ mode }: QuestionFormProps) => {
           <Button
             type="submit"
             className="primary-gradient w-fit text-light-900"
-            disabled={isSubmitting}>
+            disabled={isSubmitting}
+          >
             {isSubmitting
               ? "Submitting…"
               : isEdit

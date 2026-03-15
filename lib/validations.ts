@@ -1,16 +1,37 @@
 import { z } from "zod";
 import { escapeRegex } from "./utils";
 
+// ─── Reusable primitives ─────────────────────────────────────────────────────
+
+const passwordSchema = z
+  .string()
+  .min(6, { error: "Password must be at least 6 characters long." })
+  .max(100, { error: "Password cannot exceed 100 characters." })
+  .regex(/[A-Z]/, {
+    error: "Password must contain at least one uppercase letter.",
+  })
+  .regex(/[a-z]/, {
+    error: "Password must contain at least one lowercase letter.",
+  })
+  .regex(/[0-9]/, { error: "Password must contain at least one number." })
+  .regex(/[^a-zA-Z0-9]/, {
+    error: "Password must contain at least one special character.",
+  });
+
+// Centralises the skip transform so it never gets copy-pasted again
+const withSkip = <T extends { page: number; pageSize: number }>(data: T) => ({
+  ...data,
+  skip: (data.page - 1) * data.pageSize,
+});
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
 export const SignInSchema = z.object({
   email: z
     .email({ error: "Please provide a valid email address." })
     .trim()
     .min(1, { error: "Email is required." }),
-
-  password: z
-    .string()
-    .min(6, { error: "Password must be at least 6 characters long." })
-    .max(100, { error: "Password cannot exceed 100 characters." }),
+  password: passwordSchema,
 });
 
 export const SignUpSchema = z.object({
@@ -21,7 +42,6 @@ export const SignUpSchema = z.object({
     .regex(/^[a-zA-Z0-9_]+$/, {
       error: "Username can only contain letters, numbers, and underscores.",
     }),
-
   name: z
     .string()
     .min(1, { error: "Name is required." })
@@ -29,27 +49,59 @@ export const SignUpSchema = z.object({
     .regex(/^[a-zA-Z\s]+$/, {
       error: "Name can only contain letters and spaces.",
     }),
-
   email: z
     .email({ error: "Please provide a valid email address." })
     .trim()
     .min(1, { error: "Email is required." }),
-
-  password: z
-    .string()
-    .min(6, { error: "Password must be at least 6 characters long." })
-    .max(100, { error: "Password cannot exceed 100 characters." })
-    .regex(/[A-Z]/, {
-      error: "Password must contain at least one uppercase letter.",
-    })
-    .regex(/[a-z]/, {
-      error: "Password must contain at least one lowercase letter.",
-    })
-    .regex(/[0-9]/, { error: "Password must contain at least one number." })
-    .regex(/[^a-zA-Z0-9]/, {
-      error: "Password must contain at least one special character.",
-    }),
+  password: passwordSchema,
 });
+
+export const SignInWithOAuthSchema = z.object({
+  provider: z.enum(["google", "github"]),
+  providerAccountId: z
+    .string()
+    .min(1, { error: "Provider Account ID is required." }),
+  user: z.object({
+    name: z.string().min(1, { error: "Name is required." }),
+    username: z
+      .string()
+      .min(3, { error: "Username must be at least 3 characters long." }),
+    email: z.email({ error: "Please provide a valid email address." }),
+    image: z.url({ error: "Please provide a valid URL." }).optional(),
+  }),
+});
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+export const UserSchema = z.object({
+  name: z.string().min(1, { error: "Name is required." }),
+  username: z
+    .string()
+    .min(3, { error: "Username must be at least 3 characters long." }),
+  email: z.email({ error: "Please provide a valid email address." }),
+  bio: z.string().optional(),
+  image: z.url({ error: "Please provide a valid URL." }).optional(),
+  location: z.string().optional(),
+  portfolio: z.url({ error: "Please provide a valid URL." }).optional(),
+  reputation: z.number().optional(),
+});
+
+export const AccountSchema = z.object({
+  userId: z.string().min(1, { error: "User ID is required." }),
+  name: z.string().min(1, { error: "Name is required." }),
+  image: z.url({ error: "Please provide a valid URL." }).optional(),
+  password: passwordSchema.optional(),
+  provider: z.string().min(1, { error: "Provider is required." }),
+  providerAccountId: z
+    .string()
+    .min(1, { error: "Provider Account ID is required." }),
+});
+
+export const GetUserSchema = z.object({
+  userId: z.string().min(1, { error: "User ID is required." }),
+});
+
+// ─── Questions ────────────────────────────────────────────────────────────────
 
 export const tagSchema = z
   .string()
@@ -61,9 +113,7 @@ export const tagSchema = z
 export const AskQuestionSchema = z.object({
   title: z
     .string()
-    .min(5, {
-      error: "Title must be at least 5 characters.",
-    })
+    .min(5, { error: "Title must be at least 5 characters." })
     .max(130, { error: "Title mustn't be longer than 130 characters." }),
   content: z.string().min(100, { error: "Minimum of 100 characters." }),
   tags: z
@@ -85,7 +135,13 @@ export const GetQuestionSchema = z.object({
   questionId: z.string().min(1, { error: "Question ID is required." }),
 });
 
-const BasePaginatedSearchParamsSchema = z.object({
+export const IncrementViewsSchema = z.object({
+  questionId: z.string().min(1, { error: "Question ID is required." }),
+});
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+export const BasePaginatedSearchParamsSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(10),
   query: z
@@ -98,21 +154,13 @@ const BasePaginatedSearchParamsSchema = z.object({
 });
 
 export const PaginatedSearchParamsSchema =
-  BasePaginatedSearchParamsSchema.transform((data) => ({
-    ...data,
-    skip: (data.page - 1) * data.pageSize,
-  }));
+  BasePaginatedSearchParamsSchema.transform(withSkip);
 
 export const GetTagQuestionsSchema = BasePaginatedSearchParamsSchema.extend({
   tagId: z.string().min(1, { error: "Tag ID is required." }),
-}).transform((data) => ({
-  ...data,
-  skip: (data.page - 1) * data.pageSize,
-}));
+}).transform(withSkip);
 
-export const IncrementViewsSchema = z.object({
-  questionId: z.string().min(1, { error: "Question ID is required." }),
-});
+// ─── Answers ──────────────────────────────────────────────────────────────────
 
 export const AnswerSchema = z.object({
   content: z.string().min(100, { error: "Minimum of 100 characters." }),
@@ -124,85 +172,29 @@ export const AnswerServerSchema = AnswerSchema.extend({
 
 export const GetAnswersSchema = BasePaginatedSearchParamsSchema.extend({
   questionId: z.string().min(1, { error: "Question ID is required." }),
-}).transform((data) => ({
-  ...data,
-  skip: (data.page - 1) * data.pageSize,
-}));
+}).transform(withSkip);
 
-export const UserSchema = z.object({
-  name: z.string().min(1, { error: "Name is required." }),
-  username: z
-    .string()
-    .min(3, { error: "Username must be at least 3 characters long." }),
-  email: z.email({ error: "Please provide a valid email address." }),
-  bio: z.string().optional(),
-  image: z.url({ error: "Please provide a valid URL." }).optional(),
-  location: z.string().optional(),
-  portfolio: z.url({ error: "Please provide a valid URL." }).optional(),
-  reputation: z.number().optional(),
-});
-
-export const AccountSchema = z.object({
-  userId: z.string().min(1, { error: "User ID is required." }),
-  name: z.string().min(1, { error: "Name is required." }),
-  image: z.url({ error: "Please provide a valid URL." }).optional(),
-  password: z
-    .string()
-    .min(6, { error: "Password must be at least 6 characters long." })
-    .max(100, { error: "Password cannot exceed 100 characters." })
-    .regex(/[A-Z]/, {
-      error: "Password must contain at least one uppercase letter.",
-    })
-    .regex(/[a-z]/, {
-      error: "Password must contain at least one lowercase letter.",
-    })
-    .regex(/[0-9]/, { error: "Password must contain at least one number." })
-    .regex(/[^a-zA-Z0-9]/, {
-      error: "Password must contain at least one special character.",
-    })
-    .optional(),
-  provider: z.string().min(1, { error: "Provider is required." }),
-  providerAccountId: z
-    .string()
-    .min(1, { error: "Provider Account ID is required." }),
-});
-
-export const SignInWithOAuthSchema = z.object({
-  provider: z.enum(["google", "github"]),
-  providerAccountId: z
-    .string()
-    .min(1, { error: "Provider Account ID is required." }),
-  user: z.object({
-    name: z.string().min(1, { error: "Name is required." }),
-    username: z
-      .string()
-      .min(3, { error: "Username must be at least 3 characters long." }),
-    email: z.email("Please provide a valid email address."),
-    image: z.url("Invalid image URL").optional(),
-  }),
-});
+// ─── AI ───────────────────────────────────────────────────────────────────────
 
 export const AIAnswerSchema = z.object({
   question: z
     .string()
-    .min(5, {
-      error: "Question title must be at least 5 characters.",
-    })
+    .min(5, { error: "Question title must be at least 5 characters." })
     .max(130, {
-      error: "Question title mustn't be longer then 130 characters.",
+      error: "Question title mustn't be longer than 130 characters.",
     }),
   content: z.string().min(100, {
-    error: "Question description must have Minimum of 100 characters.",
+    error: "Question description must have a minimum of 100 characters.",
   }),
   userAnswer: z.string().optional(),
 });
 
+// ─── Votes ────────────────────────────────────────────────────────────────────
+
 export const CreateVoteSchema = z.object({
-  targetId: z.string().min(1, { message: "Target ID is required." }),
-  targetType: z.enum(["question", "answer"], {
-    message: "Invalid target type.",
-  }),
-  voteType: z.enum(["upvote", "downvote"], { message: "Invalid vote type." }),
+  targetId: z.string().min(1, { error: "Target ID is required." }),
+  targetType: z.enum(["question", "answer"], { error: "Invalid target type." }),
+  voteType: z.enum(["upvote", "downvote"], { error: "Invalid vote type." }),
 });
 
 export const UpdateVoteCountSchema = CreateVoteSchema.extend({
@@ -214,6 +206,21 @@ export const HasVotedSchema = CreateVoteSchema.pick({
   targetType: true,
 });
 
+// ─── Collections ──────────────────────────────────────────────────────────────
+
 export const CollectionBaseSchema = z.object({
-  questionId: z.string().min(1, { message: "Question ID is required." }),
+  questionId: z.string().min(1, { error: "Question ID is required." }),
+});
+
+// ─── User content (paginated) ────────────────────────────────────────────────
+
+export const GetUserQuestionsSchema = BasePaginatedSearchParamsSchema.extend({
+  userId: z.string().min(1, { error: "User ID is required." }),
+}).transform(withSkip);
+
+// Structurally identical to GetUserQuestionsSchema — aliased for semantic clarity
+export const GetUsersAnswersSchema = GetUserQuestionsSchema;
+
+export const GetUserTagsSchema = z.object({
+  userId: z.string().min(1, { error: "User ID is required." }),
 });
