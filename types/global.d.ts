@@ -64,6 +64,7 @@ interface Answer {
   downvotes: number;
   createdAt: string;
   updatedAt: string;
+  question: string;
 }
 
 interface Collection {
@@ -82,6 +83,14 @@ interface User {
   location?: string;
   portfolio?: string;
   reputation?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 type HotQuestion = Pick<Question, "_id" | "title">;
+
+interface Badges {
+  GOLD: number;
+  SILVER: number;
+  BRONZE: number;
+}

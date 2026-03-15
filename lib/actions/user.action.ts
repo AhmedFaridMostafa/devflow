@@ -14,7 +14,7 @@ import {
   GetUserTagsSchema,
   PaginatedSearchParamsSchema,
 } from "../validations";
-import { serialize } from "../utils";
+import { assignBadges, serialize } from "../utils";
 
 export async function getUsers(params: PaginatedSearchParams): Promise<
   ActionResponse<{
@@ -124,7 +124,7 @@ export async function getUserQuestions(
       },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -157,7 +157,7 @@ export async function getUserAnswers(
       },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -192,6 +192,75 @@ export async function getUserTopTags(
     return {
       success: true,
       data: { tags: serialize(tags) },
+    };
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function getUserStats(params: GetUserParams): Promise<
+  ActionResponse<{
+    totalQuestions: number;
+    totalAnswers: number;
+    badges: Badges;
+  }>
+> {
+  const validationResult = await action({ params, schema: GetUserSchema });
+
+  if (validationResult instanceof Error) return handleError(validationResult);
+
+  const { userId } = validationResult.params;
+
+  try {
+    const [questionStats, answerStats] = await Promise.all([
+      Question.aggregate([
+        { $match: { author: new Types.ObjectId(userId) } },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            upvotes: { $sum: "$upvotes" },
+            views: { $sum: "$views" },
+          },
+        },
+      ]),
+      Answer.aggregate([
+        { $match: { author: new Types.ObjectId(userId) } },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            upvotes: { $sum: "$upvotes" },
+          },
+        },
+      ]),
+    ]);
+
+    // Aggregation returns [] when no documents match — fall back to zero values
+    const {
+      count: questionCount = 0,
+      upvotes: questionUpvotes = 0,
+      views = 0,
+    } = questionStats[0] ?? {};
+    const { count: answerCount = 0, upvotes: answerUpvotes = 0 } =
+      answerStats[0] ?? {};
+
+    const badges = assignBadges({
+      criteria: [
+        { type: "ANSWER_COUNT", count: answerCount },
+        { type: "QUESTION_COUNT", count: questionCount },
+        { type: "QUESTION_UPVOTES", count: questionUpvotes + answerUpvotes },
+        { type: "TOTAL_VIEWS", count: views },
+      ],
+    });
+
+    return {
+      success: true,
+      data: {
+        totalQuestions: questionCount,
+        totalAnswers: answerCount,
+        badges,
+      },
     };
   } catch (error) {
     return handleError(error) as ErrorResponse;
