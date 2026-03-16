@@ -139,6 +139,10 @@ export const IncrementViewsSchema = z.object({
   questionId: z.string().min(1, { error: "Question ID is required." }),
 });
 
+export const DeleteQuestionSchema = z.object({
+  questionId: z.string().min(1, "Question ID is required"),
+});
+
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
 export const BasePaginatedSearchParamsSchema = z.object({
@@ -173,6 +177,10 @@ export const AnswerServerSchema = AnswerSchema.extend({
 export const GetAnswersSchema = BasePaginatedSearchParamsSchema.extend({
   questionId: z.string().min(1, { error: "Question ID is required." }),
 }).transform(withSkip);
+
+export const DeleteAnswerSchema = z.object({
+  answerId: z.string().min(1, "Answer ID is required"),
+});
 
 // ─── AI ───────────────────────────────────────────────────────────────────────
 
