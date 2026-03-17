@@ -16,16 +16,7 @@ export interface IInteraction {
   updatedAt: Date;
 }
 
-export const InteractionActionEnums = [
-  "view",
-  "upvote",
-  "downvote",
-  "bookmark",
-  "post",
-  "edit",
-  "delete",
-  "search",
-] as const;
+import { InteractionActionEnums } from "@/constants/interaction";
 
 export type IInteractionDoc = HydratedDocument<IInteraction>;
 

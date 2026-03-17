@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { escapeRegex } from "./utils";
-import { InteractionActionEnums } from "@/database/interaction.model";
+import { InteractionActionEnums } from "@/constants/interaction";
 
 // ─── Reusable primitives ─────────────────────────────────────────────────────
 
