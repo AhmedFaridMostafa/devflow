@@ -23,6 +23,8 @@ import withTransaction from "../handlers/transaction";
 import { UnauthorizedError } from "../http-errors";
 import dbConnect from "../mongoose";
 import { Answer, Collection, Vote } from "@/database";
+import { after } from "next/server";
+import { createInteraction } from "./interaction.action";
 
 export async function createQuestion(
   params: CreateQuestionParams,
@@ -73,6 +75,21 @@ export async function createQuestion(
       );
       return question;
     });
+
+    // log the interaction
+    after(async () => {
+      try {
+        await createInteraction({
+          action: "post",
+          actionId: question._id.toString(),
+          actionTarget: "question",
+          authorId: userId,
+        });
+      } catch (error) {
+        console.error("Failed to log interaction:", error);
+      }
+    });
+
     return { success: true, data: serialize(question) };
   } catch (error) {
     return handleError(error);
@@ -404,6 +421,20 @@ export async function deleteQuestion(
           : []),
         Question.findByIdAndDelete(questionId).session(session),
       ]);
+    });
+
+    // log the interaction
+    after(async () => {
+      try {
+        await createInteraction({
+          action: "delete",
+          actionId: questionId,
+          actionTarget: "question",
+          authorId: user.id,
+        });
+      } catch (error) {
+        console.error("Failed to log interaction:", error);
+      }
     });
 
     revalidatePath(`/profile/${user.id}`);

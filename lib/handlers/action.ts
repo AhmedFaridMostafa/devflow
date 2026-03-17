@@ -11,7 +11,7 @@ import { getZodFieldErrors } from "./error";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type AuthorizedSession = Omit<Session, "user"> & {
-  user: NonNullable<Session["user"]>;
+  user: NonNullable<Session["user"]> & { id: string };
 };
 
 // Discriminated union — forces params when schema is given, forbids both otherwise
@@ -57,8 +57,7 @@ async function action<S extends z.ZodType, A extends boolean = false>(
 
   if (authorize) {
     const rawSession = await auth();
-    if (!rawSession?.user || !rawSession?.user?.id)
-      return new UnauthorizedError();
+    if (!rawSession?.user?.id) return new UnauthorizedError();
     session = rawSession as AuthorizedSession;
   }
 

@@ -15,6 +15,8 @@ import {
 } from "../validations";
 import { serialize, type Serialize } from "../utils";
 import withTransaction from "../handlers/transaction";
+import { createInteraction } from "./interaction.action";
+import { after } from "next/server";
 
 export async function createAnswer(
   params: CreateAnswerParams,
@@ -53,6 +55,20 @@ export async function createAnswer(
       await question.save({ session });
 
       return newAnswer;
+    });
+
+    // log the interaction
+    after(async () => {
+      try {
+        await createInteraction({
+          action: "post",
+          actionId: newAnswer._id.toString(),
+          actionTarget: "answer",
+          authorId: userId,
+        });
+      } catch (error) {
+        console.error("Failed to log interaction:", error);
+      }
     });
 
     revalidatePath(ROUTES.QUESTION(questionId));
@@ -158,6 +174,20 @@ export async function deleteAnswer(
         ),
         Answer.findByIdAndDelete(answerId).session(session),
       ]);
+    });
+
+    // log the interaction
+    after(async () => {
+      try {
+        await createInteraction({
+          action: "delete",
+          actionId: answerId,
+          actionTarget: "answer",
+          authorId: user.id,
+        });
+      } catch (error) {
+        console.error("Failed to log interaction:", error);
+      }
     });
 
     revalidatePath(`/profile/${user.id}`);

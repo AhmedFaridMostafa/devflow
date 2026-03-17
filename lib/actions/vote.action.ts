@@ -15,7 +15,9 @@ import {
   HasVotedSchema,
   UpdateVoteCountSchema,
 } from "../validations";
-
+import { after } from "next/server";
+import { createInteraction } from "./interaction.action";
+type TargetModel = MongooseModel<IQuestion | IAnswer>;
 export async function hasVoted(
   params: HasVotedParams,
 ): Promise<ActionResponse<HasVotedResponse>> {
@@ -71,9 +73,7 @@ export async function updateVoteCount(
 
   const { targetId, targetType, voteType, change } = validationResult.params;
 
-  const Model = (
-    targetType === "question" ? Question : Answer
-  ) as MongooseModel<IQuestion | IAnswer>;
+  const Model: TargetModel = targetType === "question" ? Question : Answer;
   const voteField = voteType === "upvote" ? "upvotes" : "downvotes";
 
   try {
@@ -108,6 +108,11 @@ export async function createVote(
   const userId = validationResult.session.user.id;
 
   try {
+    const Model: TargetModel = targetType === "question" ? Question : Answer;
+    const contentDoc = await Model.findById(targetId);
+    if (!contentDoc) throw new Error("Content not found");
+    const contentAuthorId = contentDoc.author.toString();
+
     await withTransaction(async (session) => {
       const existingVote = await Vote.findOne({
         author: userId,
@@ -168,6 +173,19 @@ export async function createVote(
           ),
         ]);
       }
+      // log the interaction
+      after(async () => {
+        try {
+          await createInteraction({
+            action: voteType,
+            actionId: targetId,
+            actionTarget: targetType,
+            authorId: contentAuthorId,
+          });
+        } catch (error) {
+          console.error("Failed to log interaction:", error);
+        }
+      });
     });
 
     revalidatePath(`/questions/${targetId}`);

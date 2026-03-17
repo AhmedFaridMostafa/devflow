@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { escapeRegex } from "./utils";
+import { InteractionActionEnums } from "@/database/interaction.model";
 
 // ─── Reusable primitives ─────────────────────────────────────────────────────
 
@@ -231,4 +232,15 @@ export const GetUsersAnswersSchema = GetUserQuestionsSchema;
 
 export const GetUserTagsSchema = z.object({
   userId: z.string().min(1, { error: "User ID is required." }),
+});
+
+// ─── Interaction ────────────────────────────────────────────────
+
+export const CreateInteractionSchema = z.object({
+  action: z.enum(InteractionActionEnums, { error: "Invalid action type." }),
+  actionTarget: z.enum(["question", "answer"], {
+    error: "Invalid target type.",
+  }),
+  actionId: z.string().min(1, { error: "Action ID is required." }),
+  authorId: z.string().min(1, { error: "Author ID is required." }),
 });
