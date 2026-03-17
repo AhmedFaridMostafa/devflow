@@ -364,47 +364,46 @@ export async function deleteQuestion(
   const { user } = validationResult.session;
 
   try {
-    withTransaction(async (session) => {
-      const question = await Question.findById(questionId).session(session);
-      if (!question) throw new Error("Question not found");
+    // Fetch and auth-check outside the transaction to keep the session short
+    const question = await Question.findById(questionId);
+    if (!question) throw new Error("Question not found");
 
-      if (question.author.toString() !== user.id)
-        throw new Error("You are not authorized to delete this question");
+    if (question.author.toString() !== user.id)
+      throw new Error("You are not authorized to delete this question");
 
-      // Delete related entries inside the transaction
-      await Collection.deleteMany({ question: questionId }).session(session);
-      await TagQuestion.deleteMany({ question: questionId }).session(session);
+    await withTransaction(async (session) => {
+      // Fetch answer IDs needed for vote cleanup
+      const answerIds = (await Answer.distinct("_id", {
+        question: questionId,
+      }).session(session)) as Types.ObjectId[];
 
-      // For all tags of Question, find them and reduce their count
-      if (question.tags.length > 0) {
-        await Tag.updateMany(
-          { _id: { $in: question.tags } },
-          { $inc: { questions: -1 } },
-          { session },
-        );
-      }
-
-      //  Remove all votes of the question
-      await Vote.deleteMany({
-        actionId: questionId,
-        actionType: "question",
-      }).session(session);
-
-      // Remove all answers and their votes of the question
-      const answers = await Answer.find({ question: questionId }).session(
-        session,
-      );
-
-      if (answers.length > 0) {
-        await Answer.deleteMany({ question: questionId }).session(session);
-
-        await Vote.deleteMany({
-          actionId: { $in: answers.map((answer) => answer.id) },
-          actionType: "answer",
-        }).session(session);
-      }
-
-      await Question.findByIdAndDelete(questionId).session(session);
+      await Promise.all([
+        Collection.deleteMany({ question: questionId }).session(session),
+        TagQuestion.deleteMany({ question: questionId }).session(session),
+        Vote.deleteMany({
+          actionId: questionId,
+          actionType: "question",
+        }).session(session),
+        Answer.deleteMany({ question: questionId }).session(session),
+        ...(question.tags.length > 0
+          ? [
+              Tag.updateMany(
+                { _id: { $in: question.tags } },
+                { $inc: { questions: -1 } },
+                { session },
+              ),
+            ]
+          : []),
+        ...(answerIds.length > 0
+          ? [
+              Vote.deleteMany({
+                actionId: { $in: answerIds },
+                actionType: "answer",
+              }).session(session),
+            ]
+          : []),
+        Question.findByIdAndDelete(questionId).session(session),
+      ]);
     });
 
     revalidatePath(`/profile/${user.id}`);

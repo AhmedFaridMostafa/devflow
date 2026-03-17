@@ -3,12 +3,16 @@
 import { revalidatePath } from "next/cache";
 
 import ROUTES from "@/constants/routes";
-import { Question } from "@/database";
+import { Question, Vote } from "@/database";
 import Answer, { IAnswerDoc } from "@/database/answer.model";
 
 import action from "../handlers/action";
 import handleError from "../handlers/error";
-import { AnswerServerSchema, GetAnswersSchema } from "../validations";
+import {
+  AnswerServerSchema,
+  DeleteAnswerSchema,
+  GetAnswersSchema,
+} from "../validations";
 import { serialize, type Serialize } from "../utils";
 import withTransaction from "../handlers/transaction";
 
@@ -116,6 +120,48 @@ export async function getAnswers(params: GetAnswersParams): Promise<
         totalAnswers,
       },
     };
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function deleteAnswer(
+  params: DeleteAnswerParams,
+): Promise<ActionResponse> {
+  const validationResult = await action({
+    params,
+    schema: DeleteAnswerSchema,
+    authorize: true,
+  });
+
+  if (validationResult instanceof Error) return handleError(validationResult);
+
+  const { answerId } = validationResult.params;
+  const { user } = validationResult.session;
+
+  try {
+    const answer = await Answer.findById(answerId);
+    if (!answer) throw new Error("Answer not found");
+
+    if (answer.author.toString() !== user.id)
+      throw new Error("You're not allowed to delete this answer");
+
+    await withTransaction(async (session) => {
+      await Promise.all([
+        Question.findByIdAndUpdate(
+          answer.question,
+          { $inc: { answers: -1 } },
+          { new: true },
+        ).session(session),
+        Vote.deleteMany({ actionId: answerId, actionType: "answer" }).session(
+          session,
+        ),
+        Answer.findByIdAndDelete(answerId).session(session),
+      ]);
+    });
+
+    revalidatePath(`/profile/${user.id}`);
+    return { success: true, data: null };
   } catch (error) {
     return handleError(error);
   }
