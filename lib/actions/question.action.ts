@@ -1,6 +1,6 @@
 "use server";
 
-import { type Types, type QueryFilter } from "mongoose";
+import { Types, type QueryFilter } from "mongoose";
 
 import Question, { type IQuestion } from "@/database/question.model";
 import TagQuestion from "@/database/tag-question.model";
@@ -21,15 +21,14 @@ import { revalidatePath } from "next/cache";
 import ROUTES from "@/constants/routes";
 import withTransaction from "../handlers/transaction";
 import { UnauthorizedError } from "../http-errors";
-import dbConnect from "../mongoose";
-import { Answer, Collection, Vote } from "@/database";
+import { Answer, Collection, Interaction, Vote } from "@/database";
 import { after } from "next/server";
 import { createInteraction } from "./interaction.action";
+import { auth } from "@/auth";
 
 export async function createQuestion(
   params: CreateQuestionParams,
 ): Promise<ActionResponse<Serialize<IQuestion & { _id: Types.ObjectId }>>> {
-  // 1️⃣ Validate input and authorize user
   const validationResult = await action({
     params,
     schema: AskQuestionSchema,
@@ -43,7 +42,6 @@ export async function createQuestion(
 
   try {
     const question = await withTransaction(async (dbSession) => {
-      // 3️⃣ Upsert tags: create new tags if not exist, increment questions count
       const tagDocs = (
         await Promise.all(
           tags.map((tag) =>
@@ -58,25 +56,20 @@ export async function createQuestion(
 
       const tagIds = tagDocs.map((tag) => tag._id);
 
-      // 4️⃣ Create the question document and link it to tags
       const [question] = await Question.create(
         [{ title, content, author: userId, tags: tagIds }],
         { session: dbSession },
       );
       if (!question) throw new Error("Failed to create question");
 
-      // 5️⃣ Insert into TagQuestion pivot table for many-to-many relationship
       await TagQuestion.insertMany(
-        tagIds.map((tagId) => ({
-          tag: tagId,
-          question: question._id,
-        })),
+        tagIds.map((tagId) => ({ tag: tagId, question: question._id })),
         { session: dbSession },
       );
+
       return question;
     });
 
-    // log the interaction
     after(async () => {
       try {
         await createInteraction({
@@ -99,7 +92,6 @@ export async function createQuestion(
 export async function editQuestion(
   params: EditQuestionParams,
 ): Promise<ActionResponse<Serialize<IQuestion & { _id: Types.ObjectId }>>> {
-  // 1️⃣ Validate input and authorize user
   const validationResult = await action({
     params,
     schema: EditQuestionSchema,
@@ -113,7 +105,6 @@ export async function editQuestion(
 
   try {
     await withTransaction(async (session) => {
-      // 3️⃣ Fetch minimal question data (author and existing tags)
       const question = await Question.findById(questionId)
         .select("author tags")
         .session(session)
@@ -121,27 +112,20 @@ export async function editQuestion(
 
       if (!question) throw new Error("Question not found");
 
-      // 4️⃣ Authorization check: only the author can edit
       if (question.author.toString() !== userId)
         throw new UnauthorizedError("Not authorized");
 
-      // 5️⃣ Get current tags linked to question
-      const existingTagDocs = await Tag.find({
-        _id: { $in: question.tags },
-      })
+      const existingTagDocs = await Tag.find({ _id: { $in: question.tags } })
         .select("name")
         .session(session)
         .lean();
 
       const existingTagNames = existingTagDocs.map((t) => t.name);
-
-      // 6️⃣ Determine which tags to add and which to remove
       const tagsToAdd = tags.filter((tag) => !existingTagNames.includes(tag));
       const tagsToRemove = existingTagNames.filter(
         (tag) => !tags.includes(tag),
       );
 
-      // 7️⃣ Upsert new tags and increment their question counts
       const upsertedTags = (
         await Promise.all(
           tagsToAdd.map((tag) =>
@@ -154,14 +138,11 @@ export async function editQuestion(
         )
       ).filter((doc): doc is NonNullable<typeof doc> => doc !== null);
 
-      const tagIdsToAdd = upsertedTags.map((t) => t!._id);
-
-      // 8️⃣ Get IDs of tags to remove
+      const tagIdsToAdd = upsertedTags.map((t) => t._id);
       const tagIdsToRemove = existingTagDocs
         .filter((t) => tagsToRemove.includes(t.name))
         .map((t) => t._id);
 
-      // 9️⃣ Atomic update of the question document
       await Question.updateOne(
         { _id: questionId },
         {
@@ -172,35 +153,26 @@ export async function editQuestion(
         { session },
       );
 
-      // 🔟 Decrement questions count of removed tags
-      if (tagIdsToRemove.length) {
-        await Tag.updateMany(
-          { _id: { $in: tagIdsToRemove } },
-          { $inc: { questions: -1 } },
-          { session },
-        );
-      }
-
-      // 1️⃣1️⃣ Update TagQuestion pivot table
-      if (tagIdsToAdd.length) {
-        await TagQuestion.insertMany(
-          tagIdsToAdd.map((tagId) => ({
-            tag: tagId,
-            question: questionId,
-          })),
-          { session },
-        );
-      }
-
-      if (tagIdsToRemove.length) {
-        await TagQuestion.deleteMany(
-          { tag: { $in: tagIdsToRemove }, question: questionId },
-          { session },
-        );
-      }
+      await Promise.all([
+        tagIdsToRemove.length > 0 &&
+          Tag.updateMany(
+            { _id: { $in: tagIdsToRemove } },
+            { $inc: { questions: -1 } },
+            { session },
+          ),
+        tagIdsToAdd.length > 0 &&
+          TagQuestion.insertMany(
+            tagIdsToAdd.map((tagId) => ({ tag: tagId, question: questionId })),
+            { session },
+          ),
+        tagIdsToRemove.length > 0 &&
+          TagQuestion.deleteMany(
+            { tag: { $in: tagIdsToRemove }, question: questionId },
+            { session },
+          ),
+      ]);
     });
 
-    // 1️⃣3️⃣ Fetch and return updated question
     const updatedQuestion = await Question.findById(questionId).lean();
     if (!updatedQuestion) throw new Error("Question not found after update");
 
@@ -213,7 +185,6 @@ export async function editQuestion(
 export async function getQuestion(
   params: GetQuestionParams,
 ): Promise<ActionResponse<Question>> {
-  // 1️⃣ Validate input and authorize user
   const validationResult = await action({
     params,
     schema: GetQuestionSchema,
@@ -224,7 +195,6 @@ export async function getQuestion(
   const { questionId } = validationResult.params;
 
   try {
-    // 2️⃣ Fetch question and populate tags
     const question = await Question.findById(questionId)
       .populate<{ tags: Tag[] }>("tags", "name")
       .populate<{ author: Author }>("author", "name image")
@@ -232,12 +202,67 @@ export async function getQuestion(
 
     if (!question) throw new Error("Question not found");
 
-    // 3️⃣ Return the question
     return { success: true, data: serialize(question) };
   } catch (error) {
-    // 4️⃣ Handle errors consistently
     return handleError(error);
   }
+}
+
+async function getRecommendedQuestions({
+  userId,
+  query,
+  skip,
+  limit,
+}: RecommendationParams): Promise<{ questions: Question[]; isNext: boolean }> {
+  const interactions = await Interaction.find({
+    user: new Types.ObjectId(userId),
+    actionType: "question",
+    action: { $in: ["view", "upvote", "bookmark", "post"] },
+  })
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .lean();
+
+  const interactedQuestionIds = interactions.map((i) => i.actionId);
+
+  const interactedQuestions = await Question.find({
+    _id: { $in: interactedQuestionIds },
+  }).select<{ tags: Types.ObjectId[] }>("tags");
+
+  const allTags = interactedQuestions.flatMap((q) =>
+    q.tags.map((tag) => tag.toString()),
+  );
+
+  const uniqueTagIds = [...new Set(allTags)];
+
+  const recommendedQuery: QueryFilter<typeof Question> = {
+    _id: { $nin: interactedQuestionIds },
+    author: { $ne: new Types.ObjectId(userId) },
+    tags: { $in: uniqueTagIds.map((id) => new Types.ObjectId(id)) },
+  };
+
+  if (query) {
+    recommendedQuery.$or = [
+      { title: { $regex: query, $options: "i" } },
+      { content: { $regex: query, $options: "i" } },
+    ];
+  }
+
+  const [totalQuestions, questions] = await Promise.all([
+    Question.countDocuments(recommendedQuery),
+    Question.find(recommendedQuery)
+      .populate<{ tags: Tag[] }>("tags", "name")
+      .populate<{ author: Author }>("author", "name image")
+      .sort({ upvotes: -1, views: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+  ]);
+
+  return {
+    questions: serialize(questions),
+    isNext: totalQuestions > skip + questions.length,
+  };
 }
 
 export async function getQuestions(
@@ -255,7 +280,20 @@ export async function getQuestions(
   const filterQuery: QueryFilter<typeof Question> = {};
 
   if (filter === "recommended") {
-    return { success: true, data: { questions: [], isNext: false } };
+    const session = await auth();
+    const userId = session?.user?.id;
+
+    if (!userId)
+      return { success: true, data: { questions: [], isNext: false } };
+
+    const data = await getRecommendedQuestions({
+      userId,
+      query,
+      skip,
+      limit: pageSize,
+    });
+
+    return { success: true, data };
   }
 
   if (query) {
@@ -289,10 +327,10 @@ export async function getQuestions(
       Question.find(filterQuery)
         .populate<{ tags: Tag[] }>("tags", "name")
         .populate<{ author: Author }>("author", "name image")
-        .lean()
         .sort(sortCriteria)
         .skip(skip)
-        .limit(pageSize),
+        .limit(pageSize)
+        .lean(),
     ]);
 
     const isNext = totalQuestions > skip + questions.length;
@@ -319,11 +357,13 @@ export async function incrementViews(
   const { questionId } = validationResult.params;
 
   try {
-    const question = await Question.findById(questionId);
-    if (!question) throw new Error("Question not found");
+    const question = await Question.findByIdAndUpdate(
+      questionId,
+      { $inc: { views: 1 } },
+      { new: true },
+    ).select("views");
 
-    question.views += 1;
-    await question.save();
+    if (!question) throw new Error("Question not found");
 
     revalidatePath(ROUTES.QUESTION(questionId));
 
@@ -340,7 +380,8 @@ export async function getHotQuestions(): Promise<
   ActionResponse<HotQuestion[]>
 > {
   try {
-    await dbConnect();
+    const validationResult = await action({});
+    if (validationResult instanceof Error) return handleError(validationResult);
     const questions = await Question.aggregate<Question>([
       {
         $addFields: {
@@ -381,7 +422,6 @@ export async function deleteQuestion(
   const { user } = validationResult.session;
 
   try {
-    // Fetch and auth-check outside the transaction to keep the session short
     const question = await Question.findById(questionId);
     if (!question) throw new Error("Question not found");
 
@@ -389,7 +429,6 @@ export async function deleteQuestion(
       throw new Error("You are not authorized to delete this question");
 
     await withTransaction(async (session) => {
-      // Fetch answer IDs needed for vote cleanup
       const answerIds = (await Answer.distinct("_id", {
         question: questionId,
       }).session(session)) as Types.ObjectId[];
@@ -423,7 +462,6 @@ export async function deleteQuestion(
       ]);
     });
 
-    // log the interaction
     after(async () => {
       try {
         await createInteraction({
