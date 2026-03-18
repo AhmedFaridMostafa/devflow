@@ -10,6 +10,13 @@ import { EMPTY_QUESTION } from "@/constants/states";
 import { HomePageFilters } from "@/constants/filters";
 import CommonFilter from "@/components/filter/CommonFilter";
 import Pagination from "@/components/Pagination";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dev Overflow | Home",
+  description:
+    "Discover different programming questions and answers with recommendations from the community.",
+};
 
 const Home = async ({ searchParams }: RouteParams) => {
   const { page, pageSize, query, filter } = await searchParams;
@@ -26,7 +33,7 @@ const Home = async ({ searchParams }: RouteParams) => {
       <section className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">
         <h1 className="h1-bold text-dark100_light900">All Questions</h1>
         <Button
-          className="primary-gradient min-h-11.5 px-4 py-3 text-light-900!"
+          className="primary-gradient min-h-11.5 px-4 py-3 text-light-900! max-sm:w-full"
           asChild
         >
           <Link href={ROUTES.ASK_QUESTION}>Ask a Question</Link>
@@ -34,7 +41,7 @@ const Home = async ({ searchParams }: RouteParams) => {
       </section>
       <section className="mt-11 flex justify-between gap-5 max-sm:flex-col sm:items-center">
         <LocalSearch
-          route="/"
+          route={ROUTES.HOME}
           imgSrc="/icons/search.svg"
           placeholder="Search questions..."
           containerClassName="flex-1"
