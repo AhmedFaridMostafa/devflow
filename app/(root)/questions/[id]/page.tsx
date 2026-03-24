@@ -5,7 +5,7 @@ import UserAvatar from "@/components/UserAvatar";
 import ROUTES from "@/constants/routes";
 import { getQuestion, incrementViews } from "@/lib/actions/question.action";
 import { formatNumber, getTimeStamp } from "@/lib/utils";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { after } from "next/server";
 import AnswerForm from "@/components/forms/AnswerForm";
@@ -52,22 +52,25 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
     searchParams,
   ]);
 
-  const [season, questionResult] = await Promise.all([
+  const [session, questionResult, answersResult] = await Promise.all([
     auth(),
     getQuestion({ questionId: id }),
+    getAnswers({
+      questionId: id,
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 10,
+      filter,
+    }),
   ]);
 
-  if (!questionResult.success) return redirect("/404");
+  if (!questionResult.success) return notFound();
 
   after(async () => {
-    await incrementViews({ questionId: id });
-  });
-
-  const answersResult = await getAnswers({
-    questionId: id,
-    page: Number(page) || 1,
-    pageSize: Number(pageSize) || 10,
-    filter,
+    try {
+      await incrementViews({ questionId: id });
+    } catch (error) {
+      console.error("Failed to increment views:", error);
+    }
   });
 
   const {
@@ -83,14 +86,23 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
     upvotes,
   } = questionResult.data;
 
-  const hasVotedPromise = hasVoted({
-    targetId: questionId,
-    targetType: "question",
-  });
+  const hasVotedPromise: Promise<ActionResponse<HasVotedResponse>> = session
+    ?.user?.id
+    ? hasVoted({ targetId: questionId, targetType: "question" })
+    : Promise.resolve({
+        success: false,
+        status: 401,
+        error: { message: "Unauthorized" },
+      });
 
-  const hasSavedQuestionPromise = hasSavedQuestion({
-    questionId: questionId,
-  });
+  const hasSavedQuestionPromise: Promise<ActionResponse<{ saved: boolean }>> =
+    session?.user?.id
+      ? hasSavedQuestion({ questionId: questionId })
+      : Promise.resolve({
+          success: false,
+          status: 401,
+          error: { message: "Unauthorized" },
+        });
 
   return (
     <>
@@ -119,13 +131,13 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
                 downvotes={downvotes}
                 targetId={questionId}
                 hasVotedPromise={hasVotedPromise}
-                userId={season?.user?.id || ""}
+                userId={session?.user?.id || ""}
               />
             </Suspense>
             <Suspense fallback={<Spinner />}>
               <SaveQuestion
                 questionId={questionId}
-                userId={season?.user?.id || ""}
+                userId={session?.user?.id || ""}
                 hasSavedQuestionPromise={hasSavedQuestionPromise}
               />
             </Suspense>
@@ -172,7 +184,7 @@ const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
         <AllAnswers page={Number(page) || 1} {...answersResult} />
       </section>
       <section className="my-5">
-        {season?.user?.id ? (
+        {session?.user?.id ? (
           <AnswerForm
             questionId={questionId}
             questionTitle={title}

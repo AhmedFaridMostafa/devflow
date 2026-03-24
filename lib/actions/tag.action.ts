@@ -8,6 +8,7 @@ import {
 import { Question, Tag } from "@/database";
 import { serialize } from "../utils";
 import dbConnect from "../mongoose";
+import { cacheLife, cacheTag } from "next/cache";
 
 export const getTags = async (
   params: PaginatedSearchParams,
@@ -126,6 +127,9 @@ export const getTagQuestions = async (
 };
 
 export const getTopTags = async (): Promise<ActionResponse<Tag[]>> => {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("top-tags");
   try {
     await dbConnect();
 

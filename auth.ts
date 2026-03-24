@@ -20,7 +20,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const existingAccount = await api.accounts.getByProvider(email);
 
-        if (!existingAccount.success) return null;
+        if (!existingAccount.success || !existingAccount.data.password)
+          return null;
 
         const existingUser = await api.users.getById(
           existingAccount.data.userId.toString(),
@@ -30,19 +31,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const isValidPassword = await bcrypt.compare(
           password,
-          existingAccount.data.password!,
+          existingAccount.data.password,
         );
 
-        if (isValidPassword) {
-          return {
-            id: existingUser.data._id.toString(),
-            name: existingUser.data.name,
-            email: existingUser.data.email,
-            image: existingUser.data.image,
-          };
-        }
+        if (!isValidPassword) return null;
 
-        return null;
+        return {
+          id: existingUser.data._id.toString(),
+          name: existingUser.data.name,
+          email: existingUser.data.email,
+          image: existingUser.data.image,
+        };
       },
     }),
   ],
@@ -70,29 +69,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async signIn({ user, profile, account }) {
       if (account?.type === "credentials") return true;
-      if (!account || !user) return false;
+      if (!account || !user || !user.name || !user.email) return false;
 
       const username =
         account.provider === "github"
           ? (profile?.login as string)
-          : (user.name?.toLowerCase() as string);
+          : user.name!.toLowerCase().replace(/\s+/g, "");
 
       const userInfo = {
-        name: user.name!,
-        email: user.email!,
-        image: user.image!,
+        name: user.name,
+        email: user.email,
+        image: user.image ?? "",
         username,
       };
 
-      const { success } = (await api.auth.oAuthSignIn({
+      const { success } = await api.auth.oAuthSignIn({
         user: userInfo,
         provider: account.provider as AuthProvider,
         providerAccountId: account.providerAccountId,
-      })) as ActionResponse;
+      });
 
-      if (!success) return false;
-
-      return true;
+      return success;
     },
   },
 });

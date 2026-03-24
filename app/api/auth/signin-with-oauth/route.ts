@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import slugify from "slugify";
 
@@ -8,14 +7,10 @@ import handleError, { getZodFieldErrors } from "@/lib/handlers/error";
 import { ValidationError } from "@/lib/http-errors";
 import dbConnect from "@/lib/mongoose";
 import { SignInWithOAuthSchema } from "@/lib/validations";
+import withTransaction from "@/lib/handlers/transaction";
 
 export async function POST(request: Request) {
   const { provider, providerAccountId, user } = await request.json();
-
-  await dbConnect();
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
 
   try {
     const validatedData = SignInWithOAuthSchema.safeParse({
@@ -35,55 +30,61 @@ export async function POST(request: Request) {
       trim: true,
     });
 
-    let existingUser = await User.findOne({ email }).session(session);
-
-    if (!existingUser) {
-      [existingUser] = await User.create(
-        [{ name, username: slugifyUsername, email, image }],
-        { session },
-      );
-    } else {
-      const updatedData: { name?: string; image?: string } = {};
-
-      if (existingUser.name !== name) updatedData.name = name;
-      if (existingUser.image !== image) updatedData.image = image;
-
-      if (Object.keys(updatedData).length > 0) {
-        await User.updateOne(
-          { _id: existingUser._id },
-          { $set: updatedData },
-        ).session(session);
-      }
-    }
-
-    const existingAccount = await Account.findOne({
-      userId: existingUser._id,
-      provider,
-      providerAccountId,
-    }).session(session);
-
-    if (!existingAccount) {
-      await Account.create(
-        [
-          {
-            userId: existingUser._id,
-            name,
-            image,
-            provider,
-            providerAccountId,
-          },
+    if (!slugifyUsername)
+      throw new ValidationError({
+        username: [
+          "Username could not be generated. Please provide a valid username.",
         ],
-        { session },
-      );
-    }
+      });
 
-    await session.commitTransaction();
+    await dbConnect();
+    await withTransaction(async (session) => {
+      let existingUser = await User.findOne({ email }).session(session);
+
+      if (!existingUser) {
+        [existingUser] = await User.create(
+          [{ name, username: slugifyUsername, email, image }],
+          { session },
+        );
+      } else {
+        const updatedData: { name?: string; image?: string } = {};
+
+        if (existingUser.name !== name) updatedData.name = name;
+        if (existingUser.image !== image) updatedData.image = image;
+
+        if (Object.keys(updatedData).length > 0) {
+          await User.updateOne(
+            { _id: existingUser._id },
+            { $set: updatedData },
+            { session },
+          );
+        }
+      }
+
+      const existingAccount = await Account.findOne({
+        userId: existingUser._id,
+        provider,
+        providerAccountId,
+      }).session(session);
+
+      if (!existingAccount) {
+        await Account.create(
+          [
+            {
+              userId: existingUser._id,
+              name,
+              image,
+              provider,
+              providerAccountId,
+            },
+          ],
+          { session },
+        );
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    await session.abortTransaction();
     return handleError(error, "api");
-  } finally {
-    session.endSession();
   }
 }

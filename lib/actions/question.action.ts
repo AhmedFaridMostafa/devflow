@@ -17,7 +17,7 @@ import {
   PaginatedSearchParamsSchema,
 } from "../validations";
 import { type Serialize, serialize } from "../utils";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, cacheTag, updateTag, cacheLife } from "next/cache";
 import ROUTES from "@/constants/routes";
 import withTransaction from "../handlers/transaction";
 import { UnauthorizedError } from "../http-errors";
@@ -83,6 +83,9 @@ export async function createQuestion(
         console.error("Failed to log interaction:", error);
       }
     });
+
+    updateTag("hot-questions");
+    updateTag("top-tags");
 
     return { success: true, data: serialize(question) };
   } catch (error) {
@@ -380,9 +383,12 @@ export async function incrementViews(
 export async function getHotQuestions(): Promise<
   ActionResponse<HotQuestion[]>
 > {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("hot-questions");
+  const validationResult = await action({});
+  if (validationResult instanceof Error) return handleError(validationResult);
   try {
-    const validationResult = await action({});
-    if (validationResult instanceof Error) return handleError(validationResult);
     const questions = await Question.aggregate<Question>([
       {
         $addFields: {
