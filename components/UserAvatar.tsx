@@ -46,7 +46,9 @@ const UserAvatar = ({
             alt={name}
             className="object-cover"
             fill
+            priority
             quality={100}
+            sizes="140px"
             onError={handleImageError}
           />
         ) : (
