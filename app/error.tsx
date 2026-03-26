@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 
 import { useEffect } from "react";
 import Image from "next/image";
@@ -49,7 +49,8 @@ export default function Error({
           Oops! Something went wrong
         </h1>
         <p className="paragraph-regular mb-8 text-dark-500 dark:text-light-500">
-          An unexpected error has occurred. Let&apos;s try to refresh the page or head back to safety.
+          An unexpected error has occurred. Let&apos;s try to refresh the page
+          or head back to safety.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -70,7 +71,7 @@ export default function Error({
             className="font-semibold text-dark-100 underline-offset-4 hover:underline dark:text-light-900"
           >
             Dev<span className="text-primary-500">Flow</span>
-          </Link>{" "}
+          </Link>
           Home
         </p>
       </div>

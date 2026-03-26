@@ -119,3 +119,23 @@ interface RecommendationParams {
   skip: number;
   limit: number;
 }
+
+interface JobFilterParams {
+  query: string;
+  page: number;
+}
+
+interface JobSearchResponse {
+  status: string;
+  request_id: string;
+  data: Job[];
+}
+
+interface CountryName {
+  common: string;
+  official: string;
+}
+
+interface CountryAPIResponse {
+  name: CountryName;
+}

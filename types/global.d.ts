@@ -94,3 +94,21 @@ interface Badges {
   SILVER: number;
   BRONZE: number;
 }
+
+interface Job {
+  job_id: string;
+  job_title: string;
+  employer_name?: string;
+  employer_logo?: string;
+  employer_website?: string;
+  job_employment_type: string;
+  job_description: string;
+  job_apply_link: string;
+  job_city?: string;
+  job_state?: string;
+  job_country: string;
+}
+
+interface Country {
+  name: string;
+}

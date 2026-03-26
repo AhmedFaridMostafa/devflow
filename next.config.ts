@@ -20,6 +20,31 @@ const nextConfig: NextConfig = {
         hostname: "lh3.googleusercontent.com",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "jsearch.p.rapidapi.com",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "ip-api.com",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "restcountries.com",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "flagsapi.com",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "encrypted-tbn0.gstatic.com",
+        port: "",
+      },
     ],
   },
   cacheComponents: true,
