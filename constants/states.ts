@@ -28,6 +28,15 @@ export const EMPTY_QUESTION = {
     href: ROUTES.ASK_QUESTION,
   },
 };
+export const EMPTY_JOBS = {
+  title: "Ahh, No Jobs Yet!",
+  message:
+    "Oops! We couldn't find any jobs at the moment. Please try again later",
+  button: {
+    text: "Find a Job",
+    href: ROUTES.JOBS,
+  },
+};
 
 export const EMPTY_TAGS = {
   title: "No Tags Found",

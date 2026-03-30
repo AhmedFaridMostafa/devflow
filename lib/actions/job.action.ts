@@ -84,7 +84,10 @@ export const fetchJobs = async (
     if (result.status !== "OK" || !Array.isArray(result.data))
       throw new Error("Unexpected response shape from job API");
 
-    return { success: true, data: result.data };
+    return {
+      success: true,
+      data: result.data.filter((job) => job.job_title),
+    };
   } catch (error) {
     return handleError(error);
   }
