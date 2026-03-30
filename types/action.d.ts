@@ -139,3 +139,12 @@ interface CountryName {
 interface CountryAPIResponse {
   name: CountryName;
 }
+
+interface UpdateProfileParams {
+  userId: string;
+  name: string;
+  username: string;
+  location?: string;
+  portfolio?: string;
+  bio?: string;
+}

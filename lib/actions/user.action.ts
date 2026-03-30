@@ -13,8 +13,10 @@ import {
   GetUserSchema,
   GetUserTagsSchema,
   PaginatedSearchParamsSchema,
+  UpdateProfileSchema,
 } from "../validations";
 import { assignBadges, serialize } from "../utils";
+import { UnauthorizedError } from "../http-errors";
 
 export async function getUsers(params: PaginatedSearchParams): Promise<
   ActionResponse<{
@@ -264,5 +266,41 @@ export async function getUserStats(params: GetUserParams): Promise<
     };
   } catch (error) {
     return handleError(error) as ErrorResponse;
+  }
+}
+
+export async function updateProfile(
+  params: UpdateProfileParams,
+): Promise<ActionResponse<User>> {
+  const validationResult = await action({
+    params,
+    schema: UpdateProfileSchema,
+    authorize: true,
+  });
+
+  if (validationResult instanceof Error) return handleError(validationResult);
+
+  const { userId, ...data } = validationResult.params;
+
+  if (userId !== validationResult.session.user.id)
+    throw new UnauthorizedError();
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        ...data,
+      },
+      { new: true },
+    );
+
+    if (!user) throw new Error("User not found");
+
+    return {
+      success: true,
+      data: serialize(user),
+    };
+  } catch (error) {
+    return handleError(error);
   }
 }

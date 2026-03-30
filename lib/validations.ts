@@ -102,6 +102,30 @@ export const GetUserSchema = z.object({
   userId: z.string().min(1, { error: "User ID is required." }),
 });
 
+export const UpdateProfileSchema = z.object({
+  userId: z.string().min(1, { error: "User ID is required." }),
+  name: z
+    .string()
+    .min(3, {
+      error: "Name must be at least 3 characters.",
+    })
+    .max(130, { error: "Name mustn't be longer then 130 characters." }),
+  username: z
+    .string()
+    .min(3, { error: "username mustn't be longer then 100 characters." })
+    .max(100, { error: "username mustn't be longer then 100 characters." }),
+  bio: z
+    .string()
+    .min(3, { error: "Bio must be at least 3 characters." })
+    .max(1000, { error: "Bio mustn't be longer then 1000 characters." })
+    .optional(),
+  location: z
+    .string()
+    .min(3, { error: "Please provide proper location" })
+    .max(100, { error: "Location mustn't be longer then 100 characters." })
+    .optional(),
+  portfolio: z.url({ error: "Please provide valid URL" }).optional(),
+});
 // ─── Questions ────────────────────────────────────────────────────────────────
 
 export const tagSchema = z
