@@ -126,6 +126,9 @@ export const UpdateProfileSchema = z.object({
     .optional(),
   portfolio: z.url({ error: "Please provide valid URL" }).optional(),
 });
+
+export const ProfileSchema = UpdateProfileSchema;
+export type ProfileFormData = z.infer<typeof ProfileSchema>;
 // ─── Questions ────────────────────────────────────────────────────────────────
 
 export const tagSchema = z
