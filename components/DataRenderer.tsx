@@ -54,11 +54,12 @@ const StateSkeleton = ({
       {message}
     </p>
     {button && (
-      <Link href={button.href}>
-        <Button className="paragraph-medium mt-5 min-h-11.5 rounded-lg bg-primary-500 px-4 py-3 text-light-900 hover:bg-primary-500">
-          {button.text}
-        </Button>
-      </Link>
+      <Button
+        asChild
+        className="cursor-pointer paragraph-medium mt-5 min-h-11.5 rounded-lg bg-primary-500 px-4 py-3 text-light-900 hover:bg-primary-500"
+      >
+        <Link href={button.href}>{button.text}</Link>
+      </Button>
     )}
   </div>
 );

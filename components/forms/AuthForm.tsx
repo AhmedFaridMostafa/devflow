@@ -3,7 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Controller, DefaultValues, FieldValues, Path, SubmitHandler, useForm } from "react-hook-form";
+import {
+  Controller,
+  DefaultValues,
+  FieldValues,
+  Path,
+  SubmitHandler,
+  useForm,
+} from "react-hook-form";
 import { z, ZodType } from "zod";
 import { toast } from "sonner";
 
@@ -16,6 +23,13 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import ROUTES from "@/constants/routes";
+
+const FIELD_LABELS: Record<string, string> = {
+  email: "Email Address",
+  password: "Password",
+  name: "Full Name",
+  username: "Username",
+};
 
 export interface ActionResponse {
   success?: boolean;
@@ -38,7 +52,6 @@ const AuthForm = <T extends FieldValues>({
   formType,
   onSubmit,
 }: AuthFormProps<T>) => {
-
   const router = useRouter();
 
   const form = useForm<z.infer<typeof schema>>({
@@ -50,7 +63,9 @@ const AuthForm = <T extends FieldValues>({
     const result = await onSubmit(data);
     if (result?.success) {
       toast.success(
-        formType === "SIGN_IN" ? "Signed in successfully" : "Signed up successfully"
+        formType === "SIGN_IN"
+          ? "Signed in successfully"
+          : "Signed up successfully",
       );
       router.push(ROUTES.HOME);
     } else {
@@ -79,15 +94,19 @@ const AuthForm = <T extends FieldValues>({
                   htmlFor={`auth-form-${field}`}
                   className="paragraph-medium text-dark400_light700 capitalize"
                 >
-                  {field === "email"
-                    ? "Email Address"
-                    : field}
+                  {FIELD_LABELS[field] ?? field}
                 </FieldLabel>
                 <Input
                   {...controllerField}
                   id={`auth-form-${field}`}
                   required
-                  type={field === "password" ? "password" : "text"}
+                  type={
+                    field === "password"
+                      ? "password"
+                      : field === "email"
+                        ? "email"
+                        : "text"
+                  }
                   autoComplete={
                     field === "email"
                       ? "email"
@@ -100,9 +119,7 @@ const AuthForm = <T extends FieldValues>({
                   aria-invalid={fieldState.invalid}
                   className="paragraph-regular background-light900_dark300 light-border-2 text-dark300_light700 no-focus min-h-12 rounded-1.5 border"
                 />
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
+                {fieldState.error && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
           />
