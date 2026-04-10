@@ -148,3 +148,31 @@ interface UpdateProfileParams {
   portfolio?: string;
   bio?: string;
 }
+
+type SearchableType = "question" | "user" | "answer" | "tag";
+
+interface GlobalSearchParams {
+  query: string;
+  type: string | null;
+}
+
+interface ModelInfo<T, K> {
+  model: Model<T>;
+  searchField: keyof T;
+  type: K;
+}
+
+type SearchConfig =
+  | ModelInfo<IQuestion, "question">
+  | ModelInfo<IUser, "user">
+  | ModelInfo<IAnswer, "answer">
+  | ModelInfo<ITag, "tag">;
+
+type GlobalSearchResult = Record<
+  SearchableType | string,
+  {
+    title: string;
+    _id: Types.ObjectId;
+    type: SearchableType | string;
+  }[]
+>;

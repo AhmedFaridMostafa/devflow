@@ -533,3 +533,22 @@ code {
   display: grid !important;
   width: 100% !important;
 }
+
+/* ─── GlobalSearch ─────────────────────────────────────────────────────────── */
+
+.global-search {
+  @apply background-light800_darkgradient! relative min-h-14 rounded-xl flex-center overflow-visible;
+  div[data-slot="command-input-wrapper"] {
+    @apply border-none! gap-6! w-full;
+
+    svg {
+      @apply size-6!;
+    }
+    input {
+      @apply placeholder text-dark400_light700;
+    }
+  }
+  div[data-slot="command-list"] {
+    @apply absolute! top-full! z-10 mt-3! w-full rounded-xl bg-light-800 py-5 shadow-sm dark:bg-dark-400;
+  }
+}

@@ -6,6 +6,7 @@ import MobileNavigation from "./MobileNavigation";
 import NavbarUser from "./NavbarUser";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import GlobalSearch from "@/components/search/GlobalSearch";
 
 const Navbar = () => {
   return (
@@ -22,8 +23,9 @@ const Navbar = () => {
           Dev<span className="text-primary-500">Flow</span>
         </p>
       </Link>
-
-      <p>Global Search</p>
+      <div className="flex items-center gap-6 flex-col">
+        <GlobalSearch />
+      </div>
 
       <div className="flex-between gap-5">
         <Theme />

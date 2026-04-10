@@ -1,7 +1,7 @@
 "use server";
 import { type ClientSession, type Model as MongooseModel } from "mongoose";
-import { type IQuestion } from "@/database/question.model";
-import { type IAnswer } from "@/database/answer.model";
+import type { IQuestion } from "@/database/question.model";
+import type { IAnswer } from "@/database/answer.model";
 import { Answer, Question } from "@/database";
 import Vote from "@/database/vote.model";
 import withTransaction from "../handlers/transaction";
